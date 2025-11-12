@@ -13,12 +13,11 @@ import java.util.function.Supplier
 
 class ValueArea<T>(
     override val parentArea: RenderArea?,
-    override val zIndex: Float = 0f,
     var value: T,
     val task: Consumer<T>,
     val currentValue: Supplier<T>, // для анимаций
     val valueName: String,
-) : RenderArea(parentArea, zIndex) {
+) : RenderArea(parentArea) {
     val alpha = Delta({ currentValue.get() == value }, 400)
 
     override fun render(
@@ -42,7 +41,7 @@ class ValueArea<T>(
             .thickness(0.05f)
             .build()
 
-        this.width = text.width + PADDING * 3 // я не знаю почему тут на 3, оно просто не работает по другому
+        this.width = text.width + PADDING * 2
         this.height = text.size + PADDING * 2
 
 //        if (drawBg) {

@@ -1,4 +1,4 @@
-package twocheg.mod.screens.impl
+package twocheg.mod.screens.impl.modules
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.texture.AbstractTexture
@@ -11,16 +11,16 @@ import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.identifier
 import twocheg.mod.renderers.impl.BuiltText
-import twocheg.mod.utils.math.CurveType
+import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.utils.math.AnimType
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
-import java.awt.Color
 
 
 class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolean) -> Unit) : RenderArea(parentArea) {
     var isActive = false
-    val pulse = Delta({ isActive }, mode = CurveType.Pulse)
+    val pulse = Delta({ isActive }, mode = AnimType.Pulse)
     val pulseX = Lerp(0f, 75)
 
     var q = ""

@@ -8,9 +8,9 @@ import twocheg.mod.moduleManager
 import twocheg.mod.screens.ConfigsScreen
 import twocheg.mod.screens.ModulesScreen
 import twocheg.mod.screens.ScreenBase
-import twocheg.mod.screens.impl.SelectScreensArea
+import twocheg.mod.screens.impl.modules.SelectScreensArea
 import twocheg.mod.modules.Parent
-import twocheg.mod.screens.impl.CategoryArea
+import twocheg.mod.screens.impl.modules.CategoryArea
 import twocheg.mod.utils.math.Delta
 
 

@@ -28,12 +28,13 @@ public record BuiltText(
 		int outlineColor,
 		float outlineThickness
     ) implements IRenderer {
+    public static final float widthFactor = 1.06666666f; // вот это если не учитывать всему пизда, если у вас есть варианты по лучше, пожалуйста
 
 	private static final ShaderProgramKey MSDF_FONT_SHADER_KEY = new ShaderProgramKey(ResourceProvider.getShaderIdentifier("msdf_font"), 
 		VertexFormats.POSITION_TEXTURE_COLOR, Defines.EMPTY);
 
     public float getWidth() {
-        return font.getWidth(text, size) * 1.066f; // так надо
+        return font.getWidth(text, size) * widthFactor;
     }
 	
 	@Override

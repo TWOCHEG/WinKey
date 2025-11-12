@@ -15,7 +15,6 @@ import twocheg.mod.utils.math.random
 
 abstract class RenderArea(
     open val parentArea: RenderArea? = null,
-    open val zIndex: Float = 0f
 ) {
     var x = 0f
     var y = 0f
@@ -24,9 +23,11 @@ abstract class RenderArea(
 
     var show = true
     internal var showFactor: Delta
+    internal var zIndex: Float
 
     init {
         showFactor = Delta({ show }, parentFactor = { parentArea?.showFactor?.get() ?: 1f })
+        zIndex = (parentArea?.zIndex ?: 0f) + 3f
     }
 
     val areas: MutableList<RenderArea> = ArrayList()

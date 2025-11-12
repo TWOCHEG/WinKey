@@ -1,4 +1,4 @@
-package twocheg.mod.screens.impl
+package twocheg.mod.screens.impl.modules
 
 import net.minecraft.client.gui.DrawContext
 import org.joml.Matrix4f
@@ -13,9 +13,11 @@ import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.renderers.impl.BuiltText
+import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.utils.math.AnimType
+import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
-
 
 class CategoryArea(
     val category: Categories,
@@ -34,7 +36,8 @@ class CategoryArea(
     }
 
     init {
-        for (module in modules) areas.add(ModuleArea(module, this, zIndex + 1))
+        showFactor = Delta({ show }, mode = AnimType.EaseOut)
+        for (module in modules) areas.add(ModuleArea(module, this))
     }
 
     override fun render(
@@ -67,16 +70,20 @@ class CategoryArea(
             .size(SizeState(width!!, targetHeight.get()))
             .radius(QuadRadiusState(10f))
             .blurRadius(12f)
-            .color(QuadColorState(
-                fromRGB(110, 110, 110, 255 * showFactor.get())
-            ))
+            .color(
+                QuadColorState(
+                    fromRGB(110, 110, 110, 255 * showFactor.get())
+                )
+            )
             .build()
         blur.render(matrix, x, y)
         val mainRectBorder = Builder.border()
             .size(blur.size)
-            .color(QuadColorState(
-                fromRGB(255, 255, 255, 25 * showFactor.get())
-            ))
+            .color(
+                QuadColorState(
+                    fromRGB(255, 255, 255, 25 * showFactor.get())
+                )
+            )
             .thickness(0.2f)
             .radius(blur.radius)
             .build()

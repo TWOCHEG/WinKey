@@ -11,7 +11,7 @@ class KeyBinds : Parent("keybinds", null, null, true) {
     @EventHandler
     @Suppress("unused")
     private fun keyPress(e: EventKeyPress) {
-        if (mc.currentScreen == null || mc.currentScreen is ScreenBase || mc.currentScreen is TitleScreen) {
+        if (mc.currentScreen == null || mc.currentScreen is TitleScreen) {
             moduleManager.modules.forEach {
                 if (e.keyCode == it.keybindCode) it.toggle()
             }

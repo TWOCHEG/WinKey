@@ -1,4 +1,4 @@
-package twocheg.mod.screens.impl
+package twocheg.mod.screens.impl.modules
 
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
@@ -11,14 +11,15 @@ import twocheg.mod.moduleManager
 import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
+import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.screens.impl.ValueArea
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
 import java.lang.reflect.Constructor
-import java.util.*
+import java.util.Arrays
 
-
-class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : RenderArea(zIndex = 5f) {
+class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : RenderArea() {
     var currentGuiClass: T
     val defaultGuiClass: T
 
@@ -33,6 +34,8 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
     val searchDelta = Delta({ isSearch })
 
     init {
+        zIndex = 10f
+
         areas.clear()
 
         val defaultClass: T = Arrays.stream(guiClasses).toList().first()
@@ -43,15 +46,14 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
         for (c in guiClasses) {
             areas.add(
                 ValueArea(
-                    this, zIndex + 2,
+                    this,
                     c, this::setScreen,
                     { currentGuiClass },
                     c.simpleName
                 )
             )
         }
-        areas.add(ModuleSearchArea(this) {
-            isActive ->
+        areas.add(ModuleSearchArea(this) { isActive ->
             isSearch = isActive
             areas.last().show = isActive
         })
@@ -97,7 +99,7 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
         for (area in areas) {
             if (area.height + PADDING * 2 > this.height) this.height = area.height + PADDING * 2
         }
-        this.x = ((Parent.mc.window.width / Parent.mc.window.scaleFactor) / 2 - this.width / 2).toFloat()
+        this.x = ((mc.window.width / mc.window.scaleFactor) / 2 - this.width / 2).toFloat()
 
         val blur: BuiltBlur = Builder.blur()
             .size(SizeState(this.width, this.height))

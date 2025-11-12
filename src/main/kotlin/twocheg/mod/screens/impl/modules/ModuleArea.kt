@@ -1,4 +1,4 @@
-package twocheg.mod.screens.impl
+package twocheg.mod.screens.impl.modules
 
 import net.minecraft.client.gui.DrawContext
 import org.joml.Matrix4f
@@ -10,18 +10,37 @@ import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.modules.Parent
 import twocheg.mod.renderers.impl.BuiltText
+import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.screens.impl.modules.settings.BooleanArea
+import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
 
 class ModuleArea(
     val module: Parent,
     override val parentArea: RenderArea,
-    override val zIndex: Float
-) : RenderArea(parentArea, zIndex) {
+) : RenderArea(parentArea) {
     val enableFactor = Delta({ module.enable })
 
     var expanded = false
     val expandedFactor = Delta({ expanded })
+
+    init {
+        areas += putToAreas(module.settings)
+
+        for (area in areas) {
+            area.showFactor = Delta({ area.show }, parentFactor = { expandedFactor.get() * showFactor.get() })
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    fun putToAreas(settings: List<Setting<*>>): List<RenderArea> {
+        val areas = mutableListOf<RenderArea>()
+        for (setting in settings) {
+            if (setting.isBoolean) areas.add(BooleanArea(this, setting as Setting<Boolean>))
+        }
+        return areas
+    }
 
     override fun render(
         context: DrawContext,
@@ -33,7 +52,7 @@ class ModuleArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        val settingsHeight = 20f * expandedFactor.get()
+        val settingsHeight = (areas.sumOf { (it.height + PADDING).toInt() } + PADDING) * expandedFactor.get()
         this.height = height!! + settingsHeight
 
         val c = 0 + (50 * (1 - expandedFactor.get()) * enableFactor.get()).toInt()
@@ -75,14 +94,18 @@ class ModuleArea(
             )
 
         context.enableScissor(
-            (x + 2).toInt(),
-            (y + 2).toInt(),
-            (x + width - 4).toInt(),
-            (y + this.height - 4).toInt()
+            (x + 1).toInt(),
+            (y + 1).toInt(),
+            (x + width - 2).toInt(),
+            (y + this.height - 2).toInt()
         )
 
+        var renderY = y + this.height - settingsHeight
         if (expandedFactor.get() != 0f) {
-            // TODO рендеринг настроек
+            for (area in areas) {
+                area.render(context, matrix, x + PADDING, renderY, width - PADDING * 2, null, mouseX, mouseY)
+                renderY += area.height + PADDING
+            }
         }
 
         context.disableScissor()
@@ -93,7 +116,11 @@ class ModuleArea(
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isHovered(x, y, width, CategoryArea.MODULE_HEIGHT, mouseX, mouseY)) {
             if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) module.toggle()
-            else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) expanded = !expanded
+            else if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                if (!module.settings.isEmpty()) {
+                    expanded = !expanded
+                }
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button)
     }

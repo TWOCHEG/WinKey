@@ -4,24 +4,43 @@ package twocheg.mod.utils.math
 
 import kotlin.math.*
 
-enum class CurveType {
+enum class AnimType {
     EaseIn,
     EaseOut,
     EaseInOut,
     Linear,
     Pulse;
 
+    val allowsOvershoot: Boolean
+        get() = this == EaseIn || this == EaseOut
+
     fun get(t: Float): Float {
         return when (this) {
+            // TODO я (чат гпт) тут с формулами обосрался, исправить надо
             Linear -> t
-            EaseIn -> t * t
-            EaseOut -> 1f - (1f - t) * (1f - t)
+            EaseIn -> {
+                if (t < 0f) {
+                    val tension = 1.70158f
+                    t * t * ((tension + 1f) * t + tension)
+                } else {
+                    t * t * (3f - 2f * t)
+                }
+            }
+            EaseOut -> {
+                if (t > 1f) {
+                    val overshoot = 0.2f
+                    val x = t - 1f
+                    1f + overshoot * (1f - x * (2f - x))
+                } else {
+                    1f - (1f - t) * (1f - t) * (1f + 1.70158f * t)
+                }
+            }
             EaseInOut -> if (t < 0.5f) {
                 2f * t * t
             } else {
                 1f - (-2f * t + 2f).pow(2f) / 2f
             }
-            Pulse -> -1f // рассчитываться в другом месте
+            Pulse -> -1f
         }
     }
 }
@@ -29,7 +48,7 @@ enum class CurveType {
 class Delta(
     val directionProvider: () -> Boolean,
     val durationMs: Long = 400,
-    val mode: CurveType = CurveType.EaseInOut,
+    val mode: AnimType = AnimType.EaseInOut,
     val parentFactor: () -> Float = { 1f }
 ) {
     private var lastUpdateTime: Long = 0
@@ -57,12 +76,16 @@ class Delta(
         val deltaMs = (now - lastUpdateTime) / 1_000_000f
         lastUpdateTime = now
 
-        return (if (mode == CurveType.Pulse && directionProvider()) {
+        return (if (mode == AnimType.Pulse && directionProvider()) {
             accumulatedTime += deltaMs
             calculateSinePulseProgress()
         } else {
             accumulatedTime += if (targetDirection) deltaMs else -deltaMs
-            accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
+
+            if (!mode.allowsOvershoot) {
+                accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
+            }
+
             checkDirectionChange()
             calculateProgress()
         }) * parentFactor()
@@ -79,7 +102,7 @@ class Delta(
     private fun calculateProgress(): Float {
         if (durationMs <= 0) return 1f
         val linearProgress = accumulatedTime / durationMs
-        return mode.get(linearProgress).coerceIn(0f, 1f)
+        return mode.get(linearProgress)
     }
 
     private fun calculateSinePulseProgress(): Float {
@@ -93,7 +116,7 @@ class Delta(
 class Lerp<T : Number>(
     initialValue: T,
     durationMs: Long = 400,
-    mode: CurveType = CurveType.EaseInOut
+    mode: AnimType = AnimType.EaseInOut
 ) {
     var currentValue = initialValue
     var targetValue = initialValue
