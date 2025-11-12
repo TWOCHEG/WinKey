@@ -9,7 +9,7 @@ import twocheg.mod.managers.ConfigManager
 import twocheg.mod.settings.Setting
 
 abstract class Parent(
-    private val name: String?,
+    val name: String,
     private val category: Categories?,
     var description: String? = null,  // var потому что может в будущем буду шалить
     enable: Boolean = false,
@@ -52,9 +52,7 @@ abstract class Parent(
 
     protected open fun onDisable() {}
 
-    fun isHiddenModule(): Boolean = getName() == null
-
-    fun getName(): String? = name
+    fun isHiddenModule(): Boolean = category == null
 
     fun getCategory(): Categories? = category
 

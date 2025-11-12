@@ -7,7 +7,7 @@ import twocheg.mod.screens.ScreenBase
 import twocheg.mod.moduleManager
 import twocheg.mod.modules.Parent
 
-class KeyBinds : Parent(null, null, null, true) {
+class KeyBinds : Parent("keybinds", null, null, true) {
     @EventHandler
     @Suppress("unused")
     private fun keyPress(e: EventKeyPress) {

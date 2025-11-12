@@ -15,7 +15,7 @@ class ModuleManager(vararg modules: Parent) {
         return modules
             .groupBy { it.getCategory() }
             .mapValues { (_, moduleList) ->
-                moduleList.sortedBy { it.getName() }
+                moduleList.sortedBy { it.name }
             }
             .toSortedMap(compareBy { it?.name })
     }

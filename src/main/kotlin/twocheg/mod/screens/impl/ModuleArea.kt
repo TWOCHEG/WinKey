@@ -53,7 +53,7 @@ class ModuleArea(
 
         val text: BuiltText = Builder.text()
             .font(bikoFont.get())
-            .text(module.getName())
+            .text(module.name)
             .color(fromRGB(255, 255, 255, 255 * showFactor.get()))
             .size(14f)
             .thickness(0.05f)

@@ -49,10 +49,10 @@ class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolea
             .render(matrix, x + PADDING, y + PADDING, zIndex)
 
         if (showFactor.get() != 0f) {
-            if (!q.isEmpty()) {
+            if (isActive) {
                 val text: BuiltText = Builder.text()
                     .font(bikoFont.get())
-                    .text(q)
+                    .text(q.ifEmpty { "..." })
                     .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
                     .size(14f)
                     .thickness(0.05f)
@@ -72,7 +72,7 @@ class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolea
                 )
                 .radius(QuadRadiusState(1.5f))
                 .build()
-                .render(matrix, x + this.width + pulseX.get(), y + PADDING - 1f, zIndex)
+                .render(matrix, x + this.width + pulseX.get(), y + PADDING, zIndex)
         }
         super.render(context, matrix, x, y, this.width, this.height, mouseX, mouseY)
     }

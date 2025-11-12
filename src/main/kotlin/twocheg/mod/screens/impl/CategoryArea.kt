@@ -8,7 +8,9 @@ import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
+import twocheg.mod.moduleManager
 import twocheg.mod.modules.Parent
+import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.utils.math.Lerp
@@ -19,7 +21,7 @@ class CategoryArea(
     val category: Categories,
     val modules: List<Parent>
 ) : RenderArea() {
-    val targetHeight = Lerp(0f, 75) // TODO modules search
+    val targetHeight = Lerp(0f, 75)
 
     companion object {
         const val MODULE_PADDING = 5f
@@ -107,7 +109,13 @@ class CategoryArea(
 
         renderY += 5f
 
+        val gui = moduleManager.get(ClickGui::class.java)!!
+
         for (area in areas) {
+            if (gui.selectScreens.isSearch) {
+                val q = (gui.selectScreens.areas.last() as ModuleSearchArea).q
+                if (!(area as ModuleArea).module.name.startsWith(q)) continue
+            }
             area.render(context, matrix, x + PADDING, renderY, width - PADDING * 2f, MODULE_HEIGHT, mouseX, mouseY)
             renderY += area.height + MODULE_PADDING
         }
