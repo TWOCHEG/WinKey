@@ -14,7 +14,6 @@ import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
-import twocheg.mod.utils.math.AnimType
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
@@ -23,7 +22,7 @@ class CategoryArea(
     val category: Categories,
     val modules: List<Parent>
 ) : RenderArea() {
-    val targetHeight = Lerp(0f, 75)
+    val targetHeight = Lerp(0f)
 
     companion object {
         const val MODULE_PADDING = 5f
@@ -36,7 +35,7 @@ class CategoryArea(
     }
 
     init {
-        showFactor = Delta({ show }, mode = AnimType.EaseOut)
+        showFactor = Delta({ show })
         for (module in modules) areas.add(ModuleArea(module, this))
     }
 
@@ -51,7 +50,6 @@ class CategoryArea(
         mouseY: Double
     ) {
         this.y = y - 100 * (1 - showFactor.get())
-        val y = this.y
 
         val text: BuiltText = Builder.text()
             .font(bikoFont.get())
@@ -76,7 +74,8 @@ class CategoryArea(
                 )
             )
             .build()
-        blur.render(matrix, x, y)
+        blur.render(matrix, x, this.y)
+
         val mainRectBorder = Builder.border()
             .size(blur.size)
             .color(
@@ -87,14 +86,15 @@ class CategoryArea(
             .thickness(0.2f)
             .radius(blur.radius)
             .build()
-        mainRectBorder.render(matrix, x, y)
+        mainRectBorder.render(matrix, x, this.y)
 
         var renderY = this.y + 8f
 
         val rectX = x + (width / 2f - rectangle.size.width / 2f)
+
+        // заголовок
         rectangle.render(matrix, rectX, renderY)
         text.render(matrix, rectX + PADDING, renderY + PADDING)
-
         Builder.border()
             .size(rectangle.size)
             .color(QuadColorState(fromRGB(255, 255, 255, 10 * showFactor.get())))
@@ -105,6 +105,7 @@ class CategoryArea(
 
         renderY += rectangle.size.height + 5f
 
+        // разделитель
         val separator = Builder.rectangle()
             .size(SizeState(width - 40f, 2f))
             .color(mainRectBorder.color)
@@ -124,12 +125,12 @@ class CategoryArea(
                 if (!(area as ModuleArea).module.name.startsWith(q)) continue
             }
             area.render(context, matrix, x + PADDING, renderY, width - PADDING * 2f, MODULE_HEIGHT, mouseX, mouseY)
-            renderY += area.height + MODULE_PADDING
+            renderY += (area as ModuleArea).totalHeight + MODULE_PADDING
         }
 
         if (targetHeight.get() == 0f) targetHeight.forceSet(renderY - this.y)
         targetHeight.set(renderY - this.y)
 
-        super.render(context, matrix, x, y, width, targetHeight.get(), mouseX, mouseY)
+        super.render(context, matrix, x, this.y, width, targetHeight.get(), mouseX, mouseY)
     }
 }

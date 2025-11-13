@@ -8,13 +8,12 @@ import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.moduleManager
-import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.screens.impl.SelectionArea
 import twocheg.mod.screens.impl.ValueArea
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
 import java.lang.reflect.Constructor
 import java.util.Arrays
@@ -23,12 +22,7 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
     var currentGuiClass: T
     val defaultGuiClass: T
 
-    val changeTime = 75L
-
-    val targetX = Lerp(0f, changeTime)
-    val targetY = Lerp(0f, changeTime)
-    val targetWidth = Lerp(0f, changeTime)
-    val targetHeight = Lerp(0f, changeTime)
+    val selection = SelectionArea(this, { getValueArea(currentGuiClass) })
 
     var isSearch = false
     val searchDelta = Delta({ isSearch })
@@ -70,14 +64,6 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
         mc.setScreen(createGui(guiClass))
         currentGuiClass = guiClass
         moduleManager.get(ClickGui::class.java)!!.resetComponents()
-        setCords()
-    }
-
-    fun setCords() {
-        targetX.set(getValueArea(currentGuiClass)!!.x)
-        targetY.set(getValueArea(currentGuiClass)!!.y)
-        targetWidth.set(getValueArea(currentGuiClass)!!.width)
-        targetHeight.set(getValueArea(currentGuiClass)!!.height)
     }
 
     fun createGui(guiClass: Class<out Screen>): Screen {
@@ -123,27 +109,15 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
             (this.y + this.height - 1).toInt()
         )
 
-        val rectangle = Builder.rectangle()
-            .size(SizeState(targetWidth.get(), targetHeight.get()))
-            .color(QuadColorState(fromRGB(0, 0, 0, 50 * showFactor.get())))
-            .radius(QuadRadiusState(6f))
-            .build()
-        rectangle.render(matrix, targetX.get(), targetY.get(), 2f)
-        Builder.border()
-            .size(rectangle.size)
-            .color(QuadColorState(fromRGB(255, 255, 255, 10 * showFactor.get())))
-            .radius(rectangle.radius())
-            .thickness(0.1f)
-            .build()
-            .render(matrix, targetX.get(), targetY.get(), zIndex + 1)
-
-        if (searchDelta.get() < 0.1f) setCords()
-        else {
-            targetX.set(this.x + PADDING)
-            targetY.set(this.y + PADDING)
-            targetWidth.set(this.width - PADDING * 2)
-            targetHeight.set(this.height - PADDING * 2)
-        }
+        if (searchDelta.get() < 0.1f) selection.render(context, matrix, 0f, 0f, null, null, mouseX, mouseY)
+        else selection.render(
+            context, matrix,
+            this.x + PADDING,
+            this.y + PADDING,
+            this.width - PADDING * 2,
+            this.height - PADDING * 2,
+            mouseX, mouseY
+        )
 
         var valuesRenderX = this.x + PADDING - (this.width - areas.last().width - PADDING * 2) * searchDelta.get()
         for (area in areas) {

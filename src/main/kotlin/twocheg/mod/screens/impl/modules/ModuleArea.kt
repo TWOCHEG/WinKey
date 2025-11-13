@@ -12,6 +12,7 @@ import twocheg.mod.modules.Parent
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.screens.impl.modules.settings.BooleanArea
+import twocheg.mod.screens.impl.modules.settings.SettingArea
 import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
@@ -25,11 +26,14 @@ class ModuleArea(
     var expanded = false
     val expandedFactor = Delta({ expanded })
 
+    var totalHeight = 0f  // это очень надо
+
     init {
         areas += putToAreas(module.settings)
 
         for (area in areas) {
-            area.showFactor = Delta({ area.show }, parentFactor = { expandedFactor.get() * showFactor.get() })
+            val area = area as SettingArea<*>
+            area.showFactor = Delta({ area.show }, parentFactor = { expandedFactor.get() * area.visibleFactor.get() * showFactor.get() })
         }
     }
 
@@ -52,8 +56,11 @@ class ModuleArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        val settingsHeight = (areas.sumOf { (it.height + PADDING).toInt() } + PADDING) * expandedFactor.get()
-        this.height = height!! + settingsHeight
+        val settingsHeight = areas.sumOf { (it.height + PADDING * (it as SettingArea<*>).visibleFactor.get()).toInt() } + PADDING
+        val factoredHeight = settingsHeight * expandedFactor.get()
+        this.height = height!! + factoredHeight
+
+        totalHeight = height + if (expanded) settingsHeight else 0f
 
         val c = 0 + (50 * (1 - expandedFactor.get()) * enableFactor.get()).toInt()
         val rectangle = Builder.rectangle()
@@ -100,11 +107,11 @@ class ModuleArea(
             (y + this.height - 2).toInt()
         )
 
-        var renderY = y + this.height - settingsHeight
+        var renderY = y + this.height - factoredHeight
         if (expandedFactor.get() != 0f) {
             for (area in areas) {
                 area.render(context, matrix, x + PADDING, renderY, width - PADDING * 2, null, mouseX, mouseY)
-                renderY += area.height + PADDING
+                renderY += area.height + PADDING * (area as SettingArea<*>).visibleFactor.get()
             }
         }
 

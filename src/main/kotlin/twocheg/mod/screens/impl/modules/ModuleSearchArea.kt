@@ -21,7 +21,7 @@ import twocheg.mod.utils.math.fromRGB
 class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolean) -> Unit) : RenderArea(parentArea) {
     var isActive = false
     val pulse = Delta({ isActive }, mode = AnimType.Pulse)
-    val pulseX = Lerp(0f, 75)
+    val pulseX = Lerp(0f)
 
     var q = ""
 

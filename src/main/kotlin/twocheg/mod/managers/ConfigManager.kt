@@ -45,7 +45,7 @@ class ConfigManager(
             .setPrettyPrinting()
             .create()
 
-        val CONFIG_DIR: Path = Path.of(System.getProperty("user.home"), ".dl")
+        val CONFIG_DIR: Path = Path.of(System.getProperty("user.home"), ".wk")
 
         const val CURRENT_KEY: String = "current"
         const val KEYBIND_KEY: String = "keybind"

@@ -14,7 +14,10 @@ import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
 import twocheg.mod.utils.math.splitText
 
-class BooleanArea(override val parentArea: RenderArea, val setting: Setting<Boolean>) : RenderArea(parentArea) {
+class BooleanArea(
+    override val parentArea: RenderArea,
+    boolSet: Setting<Boolean>
+) : SettingArea<Setting<Boolean>>(parentArea, boolSet) {
     companion object {
         const val BTN_WIDTH = 30f
         const val BTH_HEIGHT = 14f
@@ -54,33 +57,22 @@ class BooleanArea(override val parentArea: RenderArea, val setting: Setting<Bool
 
         this.height = renderY - y
 
+        val color = fromRGB(130, 130, 130 + (100 * enableFactor.get()).toInt(), 255 * showFactor.get())
         val rectangle = Builder.rectangle()
-            .size(SizeState(BTN_WIDTH, BTH_HEIGHT))
-            .color(QuadColorState(
-                fromRGB(100, 100, 100 + (100 * enableFactor.get()).toInt(), 100 * showFactor.get())
-            ))
-            .radius(QuadRadiusState(4f))
+            .size(SizeState(BTN_WIDTH - PADDING * 2, 3f))
+            .color(QuadColorState(color))
+            .radius(QuadRadiusState(1f))
             .build()
         val rectX = x + width - BTN_WIDTH
         val rectY = y + (this.height / 2 - BTH_HEIGHT / 2)
-        rectangle.render(matrix, rectX, rectY, zIndex)
+        rectangle.render(matrix, rectX + PADDING, rectY + (BTH_HEIGHT / 2 - 1.5f), zIndex)
 
         val centerRect =  Builder.rectangle()
-            .size(SizeState((BTN_WIDTH / 2) - 2, BTH_HEIGHT - 2))
-            .color(QuadColorState(
-                fromRGB(255, 255, 255, 30 * showFactor.get())
-            ))
-            .radius(QuadRadiusState(3f))
+            .size(SizeState(BTH_HEIGHT, BTH_HEIGHT))
+            .color(rectangle.color)
+            .radius(QuadRadiusState((BTH_HEIGHT / 2)-1))
             .build()
-        centerRect.render(matrix, rectX + 1 + (BTN_WIDTH / 2) * enableFactor.get(), rectY + 1)
-
-        Builder.border()
-            .size(rectangle.size)
-            .color(centerRect.color)
-            .thickness(0.1f)
-            .radius(rectangle.radius)
-            .build()
-            .render(matrix, rectX, rectY, zIndex + 2)
+        centerRect.render(matrix, rectX + (BTN_WIDTH / 2) * enableFactor.get(), rectY)
 
         super.render(context, matrix, x, y, width, this.height, mouseX, mouseY)
     }

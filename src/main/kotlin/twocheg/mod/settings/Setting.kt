@@ -12,7 +12,7 @@ open class Setting<T>(
     private val visibility: (T) -> Boolean = { true },
     private val onChange: (T) -> Unit = {}
 ) {
-    var parentGroup: Any? = null
+    var parentGroup: Setting<*>? = null
         internal set
 
     var config: ConfigManager? = null
@@ -97,7 +97,7 @@ open class Setting<T>(
         return visibility(getValue())
     }
 
-    fun getGroup(): Any? {
+    fun getGroup(): Setting<*>? {
         return parentGroup
     }
 

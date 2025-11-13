@@ -11,34 +11,17 @@ enum class AnimType {
     Linear,
     Pulse;
 
-    val allowsOvershoot: Boolean
-        get() = this == EaseIn || this == EaseOut
-
     fun get(t: Float): Float {
         return when (this) {
-            // TODO я (чат гпт) тут с формулами обосрался, исправить надо
             Linear -> t
-            EaseIn -> {
-                if (t < 0f) {
-                    val tension = 1.70158f
-                    t * t * ((tension + 1f) * t + tension)
+            EaseIn -> t * t
+            EaseOut -> 1f - (1f - t) * (1f - t)
+            EaseInOut -> {
+                if (t < 0.5f) {
+                    4f * t * t * t
                 } else {
-                    t * t * (3f - 2f * t)
+                    1f - (-2f * t + 2f).pow(3f) / 2f
                 }
-            }
-            EaseOut -> {
-                if (t > 1f) {
-                    val overshoot = 0.2f
-                    val x = t - 1f
-                    1f + overshoot * (1f - x * (2f - x))
-                } else {
-                    1f - (1f - t) * (1f - t) * (1f + 1.70158f * t)
-                }
-            }
-            EaseInOut -> if (t < 0.5f) {
-                2f * t * t
-            } else {
-                1f - (-2f * t + 2f).pow(2f) / 2f
             }
             Pulse -> -1f
         }
@@ -46,7 +29,7 @@ enum class AnimType {
 }
 
 class Delta(
-    val directionProvider: () -> Boolean,
+    val direct: () -> Boolean,
     val durationMs: Long = 400,
     val mode: AnimType = AnimType.EaseInOut,
     val parentFactor: () -> Float = { 1f }
@@ -62,13 +45,13 @@ class Delta(
     fun reset() {
         accumulatedTime = 0f
         lastUpdateTime = System.nanoTime()
-        targetDirection = directionProvider()
+        targetDirection = direct()
     }
 
     fun setProgress(progress: Float) {
         accumulatedTime = (progress.coerceIn(0f, 1f) * durationMs).coerceIn(0f, durationMs.toFloat())
         lastUpdateTime = System.nanoTime()
-        targetDirection = directionProvider()
+        targetDirection = direct()
     }
 
     fun get(): Float {
@@ -76,23 +59,19 @@ class Delta(
         val deltaMs = (now - lastUpdateTime) / 1_000_000f
         lastUpdateTime = now
 
-        return (if (mode == AnimType.Pulse && directionProvider()) {
+        return (if (mode == AnimType.Pulse && direct()) {
             accumulatedTime += deltaMs
             calculateSinePulseProgress()
         } else {
             accumulatedTime += if (targetDirection) deltaMs else -deltaMs
-
-            if (!mode.allowsOvershoot) {
-                accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
-            }
-
+            accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
             checkDirectionChange()
             calculateProgress()
         }) * parentFactor()
     }
 
     private fun checkDirectionChange() {
-        val desiredDirection = directionProvider()
+        val desiredDirection = direct()
         if (desiredDirection != targetDirection) {
             targetDirection = desiredDirection
             lastUpdateTime = System.nanoTime()
@@ -102,7 +81,7 @@ class Delta(
     private fun calculateProgress(): Float {
         if (durationMs <= 0) return 1f
         val linearProgress = accumulatedTime / durationMs
-        return mode.get(linearProgress)
+        return mode.get(linearProgress).coerceIn(0f, 1f)
     }
 
     private fun calculateSinePulseProgress(): Float {
@@ -113,33 +92,36 @@ class Delta(
     }
 }
 
-class Lerp<T : Number>(
-    initialValue: T,
+class Lerp(
+    initialValue: Float,
     durationMs: Long = 400,
     mode: AnimType = AnimType.EaseInOut
 ) {
+    var startValue = initialValue
     var currentValue = initialValue
     var targetValue = initialValue
     private val delta = Delta({ true }, durationMs, mode)
 
-    fun set(newTarget: T) {
-        if (newTarget == currentValue) return
+    fun set(newTarget: Float) {
+        if (newTarget == targetValue) return
+        startValue = currentValue
         targetValue = newTarget
         delta.reset()
     }
 
-    fun forceSet(newTarget: T) {
+    fun forceSet(newTarget: Float) {
+        startValue = newTarget
         currentValue = newTarget
         targetValue = newTarget
     }
 
-    fun get(): T {
-        currentValue = lerp(currentValue, targetValue, delta.get())
+    fun get(): Float {
+        currentValue = lerp(startValue, targetValue, delta.get())
         return currentValue
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun lerp(start: Number, end: Number, t: Float): T {
-        return (start.toFloat() + (end.toFloat() - start.toFloat()) * t) as T
+    private fun lerp(start: Float, end: Float, t: Float): Float {
+        return start + (end - start) * t
     }
 }
