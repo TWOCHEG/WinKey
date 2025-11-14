@@ -10,6 +10,7 @@ import net.minecraft.registry.Registries
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 
+// интересный факт, этот класс был полностью взят со старой java версии чита и переписан на kotlin автоматически редактором и с того момента не тронут
 class BlockSelectCmd(
     name: String,
     cmdName: String,
@@ -116,7 +117,7 @@ class BlockSelectCmd(
     }
 
     private fun onBlocksClear() {
-        setValue(emptyList())
+        setValue(emptyList<Any>())
     }
 
     companion object {

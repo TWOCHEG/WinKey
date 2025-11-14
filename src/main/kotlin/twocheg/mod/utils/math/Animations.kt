@@ -8,8 +8,7 @@ enum class AnimType {
     EaseIn,
     EaseOut,
     EaseInOut,
-    Linear,
-    Pulse;
+    Linear;
 
     fun get(t: Float): Float {
         return when (this) {
@@ -23,7 +22,6 @@ enum class AnimType {
                     1f - (-2f * t + 2f).pow(3f) / 2f
                 }
             }
-            Pulse -> -1f
         }
     }
 }
@@ -59,15 +57,10 @@ class Delta(
         val deltaMs = (now - lastUpdateTime) / 1_000_000f
         lastUpdateTime = now
 
-        return (if (mode == AnimType.Pulse && direct()) {
-            accumulatedTime += deltaMs
-            calculateSinePulseProgress()
-        } else {
-            accumulatedTime += if (targetDirection) deltaMs else -deltaMs
-            accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
-            checkDirectionChange()
-            calculateProgress()
-        }) * parentFactor()
+        accumulatedTime += if (targetDirection) deltaMs else -deltaMs
+        accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
+        checkDirectionChange()
+        return calculateProgress() * parentFactor()
     }
 
     private fun checkDirectionChange() {
@@ -83,11 +76,63 @@ class Delta(
         val linearProgress = accumulatedTime / durationMs
         return mode.get(linearProgress).coerceIn(0f, 1f)
     }
+}
+
+class Pulse(
+    val direct: () -> Boolean,
+    val durationMs: Long = 400,
+    val parentFactor: () -> Float = { 1f }
+) {
+    private var accumulatedTime: Float = 0f
+    private var lastUpdateTime: Long = 0
+    private var targetDirection: Boolean = true
+
+    init {
+        reset()
+    }
+
+    fun reset() {
+        accumulatedTime = 0f
+        lastUpdateTime = System.nanoTime()
+        targetDirection = direct()
+    }
+
+    fun get(): Float {
+        val now = System.nanoTime()
+        val deltaMs = (now - lastUpdateTime) / 1_000_000f
+        lastUpdateTime = now
+
+        val desiredDirection = direct()
+
+        if (desiredDirection != targetDirection) {
+            targetDirection = desiredDirection
+            lastUpdateTime = now
+        }
+
+        if (targetDirection) {
+            accumulatedTime += deltaMs
+        } else {
+            val decayFactor = 1f - (deltaMs / durationMs).coerceAtMost(1f)
+            accumulatedTime = (accumulatedTime * decayFactor).coerceAtLeast(0f)
+        }
+
+        return calculateProgress() * parentFactor()
+    }
+
+    private fun calculateProgress(): Float {
+        return if (targetDirection) {
+            calculateSinePulseProgress()
+        } else {
+            val pulseValue = calculateSinePulseProgress()
+            val decay = accumulatedTime / durationMs
+            pulseValue * (1f - decay)
+        }
+    }
 
     private fun calculateSinePulseProgress(): Float {
         if (durationMs <= 0) return 0f
         val phase = (accumulatedTime % durationMs) / durationMs
-        val angle = PI * phase
+        val angle = Math.PI * phase
         return sin(angle).toFloat().coerceIn(0f, 1f)
     }
 }
@@ -120,7 +165,6 @@ class Lerp(
         return currentValue
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun lerp(start: Float, end: Float, t: Float): Float {
         return start + (end - start) * t
     }

@@ -48,7 +48,10 @@ open class Setting<T>(
         }
     }
 
-    fun setValue(newValue: T) {
+    fun setValue(newValue: Any?) {
+        @Suppress("UNCHECKED_CAST")
+        val newValue = newValue as T
+
         if (config != null && newValue != getValue()) {
             if (isList) {
                 val newIndex = options!!.indexOf(newValue).takeUnless { it == -1 } ?: return

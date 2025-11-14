@@ -14,6 +14,7 @@ import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.utils.math.AnimType
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
 import twocheg.mod.utils.math.fromRGB
@@ -35,7 +36,7 @@ class CategoryArea(
     }
 
     init {
-        showFactor = Delta({ show })
+        showFactor = Delta({ show }, mode = AnimType.EaseOut)
         for (module in modules) areas.add(ModuleArea(module, this))
     }
 
@@ -125,7 +126,7 @@ class CategoryArea(
                 if (!(area as ModuleArea).module.name.startsWith(q)) continue
             }
             area.render(context, matrix, x + PADDING, renderY, width - PADDING * 2f, MODULE_HEIGHT, mouseX, mouseY)
-            renderY += (area as ModuleArea).totalHeight + MODULE_PADDING
+            renderY += area.totalHeight + MODULE_PADDING
         }
 
         if (targetHeight.get() == 0f) targetHeight.forceSet(renderY - this.y)

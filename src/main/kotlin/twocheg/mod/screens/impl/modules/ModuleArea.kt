@@ -12,6 +12,7 @@ import twocheg.mod.modules.Parent
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.screens.impl.modules.settings.BooleanArea
+import twocheg.mod.screens.impl.modules.settings.ListArea
 import twocheg.mod.screens.impl.modules.settings.SettingArea
 import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
@@ -26,10 +27,8 @@ class ModuleArea(
     var expanded = false
     val expandedFactor = Delta({ expanded })
 
-    var totalHeight = 0f  // это очень надо
-
     init {
-        areas += putToAreas(module.settings)
+        areas += putToAreas(module.settings, this)
 
         for (area in areas) {
             val area = area as SettingArea<*>
@@ -38,10 +37,13 @@ class ModuleArea(
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun putToAreas(settings: List<Setting<*>>): List<RenderArea> {
+    fun putToAreas(settings: List<Setting<*>>, parentArea: RenderArea): List<RenderArea> {
         val areas = mutableListOf<RenderArea>()
+        // TODO когда будут области групп доделать
         for (setting in settings) {
-            if (setting.isBoolean) areas.add(BooleanArea(this, setting as Setting<Boolean>))
+            if (parentArea !is ModuleArea && setting.parentGroup != null) continue
+            if (setting.isBoolean) areas.add(BooleanArea(parentArea, setting as Setting<Boolean>))
+            if (setting.isList) areas.add(ListArea(parentArea, setting))
         }
         return areas
     }
@@ -56,8 +58,8 @@ class ModuleArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        val settingsHeight = areas.sumOf { (it.height + PADDING * (it as SettingArea<*>).visibleFactor.get()).toInt() } + PADDING
-        val factoredHeight = settingsHeight * expandedFactor.get()
+        val settingsHeight = (areas.sumOf { (it.totalHeight + PADDING * (it as SettingArea<*>).visibleFactor.get()).toInt() } + PADDING)
+        val factoredHeight = (areas.sumOf { (it.height + PADDING * (it as SettingArea<*>).visibleFactor.get()).toInt() } + PADDING) * expandedFactor.get()
         this.height = height!! + factoredHeight
 
         totalHeight = height + if (expanded) settingsHeight else 0f

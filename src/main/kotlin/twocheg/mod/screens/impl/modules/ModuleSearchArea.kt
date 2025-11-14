@@ -12,16 +12,15 @@ import twocheg.mod.builders.states.SizeState
 import twocheg.mod.identifier
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
-import twocheg.mod.utils.math.AnimType
-import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.Lerp
+import twocheg.mod.utils.math.Pulse
 import twocheg.mod.utils.math.fromRGB
 
 
 class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolean) -> Unit) : RenderArea(parentArea) {
     var isActive = false
-    val pulse = Delta({ isActive }, mode = AnimType.Pulse)
-    val pulseX = Lerp(0f)
+    val pulse = Pulse({ isActive }, parentFactor = { showFactor.get() })
+    val pulseX = Lerp(0f, 200)
 
     var q = ""
 
@@ -49,25 +48,23 @@ class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolea
             .render(matrix, x + PADDING, y + PADDING, zIndex)
 
         if (showFactor.get() != 0f) {
-            if (isActive) {
-                val text: BuiltText = Builder.text()
-                    .font(bikoFont.get())
-                    .text(q.ifEmpty { "..." })
-                    .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
-                    .size(14f)
-                    .thickness(0.05f)
-                    .build()
-                text.render(matrix, x + this.width, y + PADDING, zIndex)
-                val targetDiff = text.width + 1f
-                if (pulseX.get() == 0f) pulseX.forceSet(targetDiff)
-                else pulseX.set(targetDiff)
-            }
+            val text: BuiltText = Builder.text()
+                .font(bikoFont.get())
+                .text(q.ifEmpty { "..." })
+                .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
+                .size(14f)
+                .thickness(0.05f)
+                .build()
+            text.render(matrix, x + this.width, y + PADDING, zIndex)
+            val targetDiff = text.width + 1f
+            if (pulseX.get() == 0f) pulseX.forceSet(targetDiff)
+            else pulseX.set(targetDiff)
 
             Builder.rectangle()
                 .size(SizeState(3f, 14f))
                 .color(
                     QuadColorState(
-                        fromRGB(255, 255, 255, 200 * pulse.get() * showFactor.get())
+                        fromRGB(255, 255, 255, 200 * pulse.get())
                     )
                 )
                 .radius(QuadRadiusState(1.5f))
