@@ -87,7 +87,7 @@ class Delta(
     }
 
     fun get(): Float {
-        val deltaMs = timer.elapsedMs()
+        val deltaMs = timer.elapsedMs
         timer.reset()
 
         val currentDir = direction()
@@ -129,7 +129,7 @@ class Pulse(
     }
 
     fun get(): Float {
-        val deltaMs = timer.elapsedMs()
+        val deltaMs = timer.elapsedMs
         timer.reset()
 
         val currentDir = direct()
@@ -187,7 +187,7 @@ class Spring(
     }
 
     fun get(): Float {
-        val dt = timer.deltaTimeSec()
+        val dt = timer.deltaTimeSec
         if (dt <= 0f) return current
 
         update(dt)
@@ -220,7 +220,7 @@ class Hybrid(
     private val minDurationNs = (durationMs * 1e6f).toLong()
 
     fun set(newTarget: Float) {
-        if (minDurationTimer.elapsedNs() > minDurationNs) {
+        if (minDurationTimer.elapsedNs > minDurationNs) {
             spring.forceSet(spring.current)
             minDurationTimer.reset()
         }

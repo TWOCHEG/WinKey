@@ -50,7 +50,7 @@ class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolea
 
         if (showFactor.get() != 0f) {
             val text: BuiltText = Builder.text()
-                .font(bikoFont.get())
+                .font(bikoFont())
                 .text(q.ifEmpty { "..." })
                 .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
                 .size(14f)

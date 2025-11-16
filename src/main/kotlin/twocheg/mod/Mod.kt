@@ -5,14 +5,12 @@ import meteordevelopment.orbit.EventBus
 import meteordevelopment.orbit.IEventBus
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.util.Identifier
-import org.lwjgl.glfw.GLFW
-import twocheg.mod.managers.FriendsManager
 import twocheg.mod.managers.ModuleManager
-import twocheg.mod.modules.Example
-import twocheg.mod.modules.client.*
 import twocheg.mod.msdf.MsdfFont
 import java.lang.invoke.MethodHandles
-import java.util.function.Supplier
+
+import twocheg.mod.modules.Example
+import twocheg.mod.modules.client.*
 
 
 val EVENT_BUS: IEventBus = EventBus()
@@ -23,13 +21,18 @@ enum class Categories {
     combat, client, example, render, misc
 }
 
-val bikoFont: Supplier<MsdfFont> = Suppliers.memoize { MsdfFont.builder().atlas("biko").data("biko").build() }
+val bikoFont: () -> MsdfFont = { MsdfFont.builder().atlas("biko").data("biko").build() }
 
 @Suppress("unused")
 fun init() {
     EVENT_BUS.registerLambdaFactory(NAME_SPACE) { lookupInMethod, klass ->
         lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup?
     }
+
+    KeyBinds()
+    ClickGui()
+    Example()
+
     ModuleManager.init()
 }
 

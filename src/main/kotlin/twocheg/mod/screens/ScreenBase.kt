@@ -8,13 +8,11 @@ import net.minecraft.text.Text
 import org.lwjgl.glfw.GLFW
 import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
-import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
+import twocheg.mod.managers.ModuleManager
 import twocheg.mod.screens.impl.RenderArea
-import twocheg.mod.moduleManager
 import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
-import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
 
 
@@ -23,10 +21,12 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
         val mc: MinecraftClient = MinecraftClient.getInstance()
     }
 
-    var open = true
-    var openFactor = Delta({ open })
+    val gui = ModuleManager.get(ClickGui::class.java)!!
 
-    val gui = moduleManager.get(ClickGui::class.java)!!
+    val open: Boolean
+        get() = gui.enable
+    val openFactor
+        get() = gui.openFactor
 
     val areas = mutableListOf<RenderArea>()
 
@@ -42,7 +42,7 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
 
         val matrix = context.matrices.peek().getPositionMatrix()
 
-        val bgColorTop = fromRGB(0, 0, 0, 80 * gui.showFactor.get())
+        val bgColorTop = fromRGB(0, 0, 0, 80 * gui.openFactor.get())
         val bgColorBottom = fromRGB(0, 0, 0, 0)
 
         Builder.rectangle()
@@ -63,7 +63,7 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
     override fun shouldPause(): Boolean = false
 
     override fun close() {
-        open = false
+
     }
 
     open fun closeIf(): Boolean = !open && openFactor.get() == 0f
@@ -72,8 +72,8 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
         for (area in areas) {
             if (area.keyPressed(keyCode, scanCode, modifiers)) return true
         }
-        if (gui.showFactor.get() == 1f && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keybindCode)) {
-            gui.setEnable(false)
+        if (gui.openFactor.get() == 1f && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keyBind)) {
+            gui.enable = false
             return true
         }
         return super.keyPressed(keyCode, scanCode, modifiers)

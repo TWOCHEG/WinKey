@@ -3,7 +3,7 @@ plugins {
     id("fabric-loom") version "1.9-SNAPSHOT"
     id("maven-publish")
     id("org.jetbrains.kotlin.jvm") version "2.2.21"
-    // id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.2.21"
 }
 
 repositories {
@@ -29,18 +29,23 @@ val fabricKotlinVersion: String by project
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
     mappings("net.fabricmc:yarn:$yarnMappings:v2")
-    implementation("net.fabricmc:fabric-loader:$loaderVersion")
+    modImplementation("net.fabricmc:fabric-loader:$loaderVersion")
 
-    implementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
 
-    implementation("net.fabricmc:fabric-language-kotlin:${fabricKotlinVersion}")
+    modImplementation("net.fabricmc:fabric-language-kotlin:${fabricKotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    implementation("meteordevelopment:orbit:0.2.3")
+    modImplementation("meteordevelopment:orbit:0.2.3")
 
     implementation("com.google.code.gson:gson:2.8.9")
-
     implementation("net.fabricmc:dev-launch-injector:0.2.1+build.8")
+}
+
+sourceSets {
+    main {
+        java.srcDirs("src/main/java", "src/main/kotlin")
+    }
 }
 
 tasks.processResources {

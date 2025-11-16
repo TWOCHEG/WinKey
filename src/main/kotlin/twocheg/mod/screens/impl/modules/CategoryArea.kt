@@ -8,7 +8,7 @@ import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
-import twocheg.mod.moduleManager
+import twocheg.mod.managers.ModuleManager
 import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.screens.impl.RenderArea
@@ -34,8 +34,8 @@ class CategoryArea(
     }
 
     init {
-        showFactor = Delta({ show }, curve = EasingCurve.EaseOut)
-        for (module in modules) areas.add(ModuleArea(module, this))
+        showFactor = Delta({ show })
+        for (module in modules.filter { it.visibleInUI }) areas.add(ModuleArea(module, this))
     }
 
     override fun render(
@@ -52,7 +52,7 @@ class CategoryArea(
         this.y = y - yDiff
 
         val text = Builder.text()
-            .font(bikoFont.get())
+            .font(bikoFont())
             .text(category.name)
             .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
             .size(14f)
@@ -117,7 +117,7 @@ class CategoryArea(
 
         renderY += 5f
 
-        val gui = moduleManager.get(ClickGui::class.java)!!
+        val gui = ModuleManager.get(ClickGui::class.java)!!
 
         for (area in areas) {
             if (gui.selectScreens.isSearch) {

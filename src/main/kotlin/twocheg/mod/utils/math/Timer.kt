@@ -18,19 +18,18 @@ class Timer {
         startTimeNs = System.nanoTime()
     }
 
-    fun elapsedMs(): Float {
-        return (System.nanoTime() - startTimeNs) / 1_000_000f
-    }
+    val elapsedMs: Float
+        get() = ((System.nanoTime() - startTimeNs) / 1_000_000f)
 
-    fun elapsedNs(): Long {
-        return System.nanoTime() - startTimeNs
-    }
+    val elapsedNs: Long
+        get() = System.nanoTime() - startTimeNs
+
 
     fun setElapsedMs(ms: Float) {
         startTimeNs = System.nanoTime() - (ms * 1_000_000f).toLong()
     }
 
-    fun passedMs(ms: Float): Boolean = elapsedMs() >= ms
+    fun passedMs(ms: Float): Boolean = elapsedMs >= ms
     fun passedS(s: Float): Boolean = passedMs(s * 1000f)
 
     fun everyMs(ms: Float): Boolean {
@@ -41,10 +40,11 @@ class Timer {
         return false
     }
 
-    fun deltaTimeSec(): Float {
-        val now = System.nanoTime()
-        val deltaNs = now - startTimeNs
-        startTimeNs = now
-        return deltaNs / 1e9f
-    }
+    val deltaTimeSec: Float
+        get() {
+            val now = System.nanoTime()
+            val deltaNs = now - startTimeNs
+            startTimeNs = now
+            return deltaNs / 1e9f
+        }
 }

@@ -58,6 +58,7 @@ class ModulesScreen() : ScreenBase("modules") {
         for (i in 0..<categories.size) {
             val c = categories[i]
             if (timer.passedTimeMs > 100L * (i + 1)) {
+                println(open)
                 c.show = open
             }
             if (c.showFactor.get() == 0f) closeCount++

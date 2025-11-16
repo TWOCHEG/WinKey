@@ -14,7 +14,10 @@ import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.screens.impl.modules.settings.BooleanArea
 import twocheg.mod.screens.impl.modules.settings.ListArea
 import twocheg.mod.screens.impl.modules.settings.SettingArea
+import twocheg.mod.settings.BooleanSetting
+import twocheg.mod.settings.ListSettings
 import twocheg.mod.settings.Setting
+import twocheg.mod.settings.SettingBase
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
 
@@ -39,11 +42,9 @@ class ModuleArea(
     @Suppress("UNCHECKED_CAST")
     fun putToAreas(settings: List<Setting<*>>, parentArea: RenderArea): List<RenderArea> {
         val areas = mutableListOf<RenderArea>()
-        // TODO когда будут области групп доделать
         for (setting in settings) {
-            if (parentArea !is ModuleArea && setting.parentGroup != null) continue
-            if (setting.isBoolean) areas.add(BooleanArea(parentArea, setting as Setting<Boolean>))
-            if (setting.isList) areas.add(ListArea(parentArea, setting))
+            if (setting is BooleanSetting) areas.add(BooleanArea(parentArea, setting))
+            if (setting is ListSettings<*>) areas.add(ListArea(parentArea, setting))
         }
         return areas
     }
@@ -78,7 +79,7 @@ class ModuleArea(
         border.render(matrix, x, y, 1f)
 
         val text: BuiltText = Builder.text()
-            .font(bikoFont.get())
+            .font(bikoFont())
             .text(module.name)
             .color(fromRGB(255, 255, 255, 255 * showFactor.get()))
             .size(14f)

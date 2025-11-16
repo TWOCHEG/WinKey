@@ -7,7 +7,7 @@ import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
-import twocheg.mod.moduleManager
+import twocheg.mod.managers.ModuleManager
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.renderers.impl.BuiltBlur
 import twocheg.mod.screens.impl.RenderArea
@@ -65,7 +65,7 @@ class ScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : RenderArea(
     fun setScreen(guiClass: T) {
         mc.setScreen(createGui(guiClass))
         currentGuiClass = guiClass
-        moduleManager.get(ClickGui::class.java)!!.resetComponents()
+        ModuleManager.get(ClickGui::class.java)!!.resetComponents()
     }
 
     fun createGui(guiClass: Class<out Screen>): Screen {

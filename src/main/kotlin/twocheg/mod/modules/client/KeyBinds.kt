@@ -4,8 +4,7 @@ import meteordevelopment.orbit.EventHandler
 import net.minecraft.client.gui.screen.TitleScreen
 import twocheg.mod.Categories
 import twocheg.mod.events.impl.EventKeyPress
-import twocheg.mod.screens.ScreenBase
-import twocheg.mod.moduleManager
+import twocheg.mod.managers.ModuleManager
 import twocheg.mod.modules.Parent
 
 class KeyBinds : Parent(
@@ -18,8 +17,8 @@ class KeyBinds : Parent(
     @Suppress("unused")
     private fun keyPress(e: EventKeyPress) {
         if (mc.currentScreen == null || mc.currentScreen is TitleScreen) {
-            moduleManager.modules.forEach {
-                if (e.keyCode == it.keybindCode) it.toggle()
+            ModuleManager.modules.forEach {
+                if (e.keyCode == it.keyBind) it.toggle()
             }
         }
     }

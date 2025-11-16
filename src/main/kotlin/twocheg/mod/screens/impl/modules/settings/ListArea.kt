@@ -9,6 +9,7 @@ import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.screens.impl.SelectionArea
 import twocheg.mod.screens.impl.ValueArea
+import twocheg.mod.settings.ListSettings
 import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
@@ -16,21 +17,21 @@ import twocheg.mod.utils.math.splitText
 
 class ListArea (
     override val parentArea: RenderArea,
-    listSet: Setting<*>
-) : SettingArea<Setting<*>>(parentArea, listSet) {
+    val list: ListSettings<*>
+) : SettingArea<ListSettings<*>>(parentArea, list) {
     val selection = SelectionArea(this)
 
     init {
         @Suppress("CAST_NEVER_SUCCEEDS")
-        for (option in listSet.getOptions()!!) {
+        for (option in list.values) {
             areas.add(ValueArea(
                 this, option,
-                listSet::setAny,
-                { listSet.value },
+                list::setAny,
+                { list.current },
                 option.toString()
             ))
         }
-        selection.targetArea = { getValueArea(listSet.value) }
+        selection.targetArea = { getValueArea(list.current) }
     }
 
     var expanded = false
@@ -49,11 +50,11 @@ class ListArea (
         val lines = splitText(
             setting.name,
             width!!
-        ) { text -> bikoFont.get().getWidth(text, 14f) }
+        ) { text -> bikoFont().getWidth(text, 14f) }
         var renderY = y
         for (line in lines) {
             val text: BuiltText = Builder.text()
-                .font(bikoFont.get())
+                .font(bikoFont())
                 .text(line)
                 .color(fromRGB(255, 255, 255, 200 * showFactor.get()))
                 .size(14f)
@@ -89,5 +90,11 @@ class ListArea (
             return super.mouseClicked(mouseX, mouseY, button)
         }
         return false
+    }
+
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, scrollX: Double, scrollY: Double): Boolean {
+        if (scrollY < 0) list.prev()
+        else list.next()
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)
     }
 }

@@ -1,14 +1,11 @@
 package twocheg.mod.managers
 
-import meteordevelopment.orbit.EventHandler
 import twocheg.mod.Categories
 import twocheg.mod.EVENT_BUS
-import twocheg.mod.events.impl.EventDisableModule
-import twocheg.mod.events.impl.EventEnableModule
 import twocheg.mod.modules.Parent
 
 object ModuleManager {
-    private val modules = mutableListOf<Parent>()
+    val modules = mutableListOf<Parent>()
     val byCategory = mutableMapOf<Categories, MutableList<Parent>>()
 
     fun register(module: Parent) {
@@ -35,18 +32,9 @@ object ModuleManager {
 
     fun init() {
         EVENT_BUS.subscribe(this)
-        getEnabled().forEach { EVENT_BUS.subscribe(it) }
-    }
-
-    @EventHandler
-    @Suppress("unused")
-    fun onEnableModule(e: EventEnableModule) {
-        EVENT_BUS.subscribe(e.module)
-    }
-
-    @EventHandler
-    @Suppress("unused")
-    fun onDisableModule(e: EventDisableModule) {
-        EVENT_BUS.unsubscribe(e.module)
+        modules.forEach {
+            it.init()
+            EVENT_BUS.subscribe(it)
+        }
     }
 }

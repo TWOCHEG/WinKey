@@ -31,7 +31,7 @@ class ValueArea<T>(
         mouseY: Double
     ) {
         val text: BuiltText = Builder.text()
-            .font(bikoFont.get())
+            .font(bikoFont())
             .text(valueName)
             .color(fromRGB(
                 255, 255, 255,

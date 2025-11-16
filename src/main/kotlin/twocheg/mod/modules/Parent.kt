@@ -4,26 +4,19 @@ import net.minecraft.client.MinecraftClient
 import twocheg.mod.Categories
 import twocheg.mod.managers.ConfigManager
 import twocheg.mod.managers.ModuleManager
-import kotlin.reflect.KProperty
-
-data class KeyBind(
-    val key: Int,
-    val modifiers:
-    Int = 0,
-) {
-    companion object {
-        val NONE = KeyBind(-1)
-    }
-}
+import twocheg.mod.settings.Setting
+import twocheg.mod.settings.SettingBase
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 
 abstract class Parent(
     val name: String,
-    val description: String?,
+    val description: String? = null,
     val category: Categories,
     val enabledByDefault: Boolean = false,
     val disableOnStartup: Boolean = false,
     val visibleInUI: Boolean = true,
-    val defaultKeyBind: KeyBind = KeyBind.NONE
+    var defaultKeyBind: Int = -1
 ) {
     companion object {
         @JvmStatic
@@ -33,10 +26,20 @@ abstract class Parent(
         fun fullNullCheck(): Boolean = mc.player == null || mc.world == null
     }
 
-    private val config = ConfigManager("modules.$name")
+    val settings = mutableListOf<Setting<*>>()
 
-    var enable: Boolean = config["enabled", if (disableOnStartup) false else enabledByDefault]
-    open var keyBind: KeyBind = defaultKeyBind
+    protected val config = ConfigManager("modules.$name")
+
+    var enable: Boolean = if (disableOnStartup) false else config["enabled", enabledByDefault]
+        set(e) {
+            config["enable"] = e
+            field = e
+        }
+    open var keyBind: Int = config["keybind", defaultKeyBind]
+        set(k) {
+            config["keybind"] = k
+            field = k
+        }
 
     open fun onEnable() {}
     open fun onDisable() {}
@@ -51,6 +54,17 @@ abstract class Parent(
     fun resetToDefault() {
         enable = enabledByDefault
         keyBind = defaultKeyBind
+    }
+
+    open fun init() {
+        this::class.declaredMemberProperties.forEach { prop ->
+            prop.isAccessible = true
+            val value = prop.getter.call(this)
+            if (value is Setting<*>) {
+                settings.add(value)
+                value.init(this.config)
+            }
+        }
     }
 
     init {

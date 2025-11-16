@@ -9,6 +9,7 @@ import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
+import twocheg.mod.settings.BooleanSetting
 import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
 import twocheg.mod.utils.math.fromRGB
@@ -16,8 +17,8 @@ import twocheg.mod.utils.math.splitText
 
 class BooleanArea(
     override val parentArea: RenderArea,
-    boolSet: Setting<Boolean>
-) : SettingArea<Setting<Boolean>>(parentArea, boolSet) {
+    bool: BooleanSetting
+) : SettingArea<BooleanSetting>(parentArea, bool) {
     companion object {
         const val BTN_WIDTH = 30f
         const val BTH_HEIGHT = 14f
@@ -35,7 +36,7 @@ class BooleanArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        val bikoFont = bikoFont.get()
+        val bikoFont = bikoFont()
 
         val lines = splitText(
             setting.name,
@@ -78,7 +79,7 @@ class BooleanArea(
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        if (isHovered(mouseX, mouseY)) setting.value = !setting.value
+        if (isHovered(mouseX, mouseY)) setting.toggle()
         return super.mouseClicked(mouseX, mouseY, button)
     }
 }

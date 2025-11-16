@@ -17,7 +17,7 @@ class ConfigsScreen() : ScreenBase("configs") {
         val matrix = context.matrices.peek().getPositionMatrix()
 
         val text: BuiltText = Builder.text()
-            .font(bikoFont.get())
+            .font(bikoFont())
             .text("SOON...")
             .color(fromRGB(255, 255, 255, (255 * openFactor.get()).toInt()))
             .size(20f)

@@ -3,7 +3,6 @@ package twocheg.mod.modules.client
 import org.lwjgl.glfw.GLFW
 import twocheg.mod.Categories
 import twocheg.mod.managers.ModuleManager
-import twocheg.mod.modules.KeyBind
 import twocheg.mod.screens.ConfigsScreen
 import twocheg.mod.screens.ModulesScreen
 import twocheg.mod.screens.ScreenBase
@@ -18,21 +17,23 @@ class ClickGui : Parent(
     "screens handler",
     Categories.client,
     disableOnStartup = true,
-    defaultKeyBind = KeyBind(GLFW.GLFW_KEY_RIGHT_SHIFT)
+    defaultKeyBind = GLFW.GLFW_KEY_RIGHT_SHIFT
 ) {
-    val showFactor = Delta({ enable })
+    val openFactor = Delta({ enable })
 
-    override var keyBind: KeyBind = defaultKeyBind
-        set(v) {
-            if (v.key != -1) field = v
-            else {}
+    override var keyBind: Int = config["keybind", defaultKeyBind]
+        set(k) {
+            if (k != -1) {
+                config["keybind"] = k
+                field = k
+            }
         }
 
     var selectScreens = ScreensArea(ModulesScreen::class.java, ConfigsScreen::class.java)
     val categories = mutableListOf<CategoryArea>()
 
     init {
-        this.selectScreens.showFactor = showFactor
+        this.selectScreens.showFactor = openFactor
     }
 
     override fun onDisable() {
