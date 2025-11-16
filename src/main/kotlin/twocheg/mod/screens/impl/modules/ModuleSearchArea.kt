@@ -12,7 +12,7 @@ import twocheg.mod.builders.states.SizeState
 import twocheg.mod.identifier
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
-import twocheg.mod.utils.math.Lerp
+import twocheg.mod.utils.math.Spring
 import twocheg.mod.utils.math.Pulse
 import twocheg.mod.utils.math.fromRGB
 
@@ -20,11 +20,12 @@ import twocheg.mod.utils.math.fromRGB
 class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolean) -> Unit) : RenderArea(parentArea) {
     var isActive = false
     val pulse = Pulse({ isActive }, parentFactor = { showFactor.get() })
-    val pulseX = Lerp(0f, 200)
+    val pulseX = Spring(0f)
 
     var q = ""
 
     init {
+        show = false
         this.width = 14 + PADDING * 2
         this.height = 14 + PADDING * 2
     }

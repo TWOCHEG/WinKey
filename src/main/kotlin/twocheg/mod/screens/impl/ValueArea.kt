@@ -18,7 +18,7 @@ class ValueArea<T>(
     val currentValue: Supplier<T>, // для анимаций
     val valueName: String,
 ) : RenderArea(parentArea) {
-    val alpha = Delta({ currentValue.get() == value }, 400)
+    val alpha = Delta({ currentValue.get() == value })
 
     override fun render(
         context: DrawContext,

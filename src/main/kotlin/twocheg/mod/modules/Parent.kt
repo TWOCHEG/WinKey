@@ -2,97 +2,29 @@ package twocheg.mod.modules
 
 import net.minecraft.client.MinecraftClient
 import twocheg.mod.Categories
-import twocheg.mod.EVENT_BUS
-import twocheg.mod.events.impl.EventDisableModule
-import twocheg.mod.events.impl.EventEnableModule
 import twocheg.mod.managers.ConfigManager
-import twocheg.mod.settings.Setting
+import twocheg.mod.managers.ModuleManager
+import kotlin.reflect.KProperty
+
+data class KeyBind(
+    val key: Int,
+    val modifiers:
+    Int = 0,
+) {
+    companion object {
+        val NONE = KeyBind(-1)
+    }
+}
 
 abstract class Parent(
     val name: String,
-    private val category: Categories?,
-    var description: String? = null,  // var потому что может в будущем буду шалить
-    enable: Boolean = false,
-    keybind: Int = -1
+    val description: String?,
+    val category: Categories,
+    val enabledByDefault: Boolean = false,
+    val disableOnStartup: Boolean = false,
+    val visibleInUI: Boolean = true,
+    val defaultKeyBind: KeyBind = KeyBind.NONE
 ) {
-    val config = ConfigManager(name)
-    var enable: Boolean = getValue(ConfigManager.ENABLE_KEY, enable)
-        private set
-    var keybindCode: Int = getValue(ConfigManager.KEYBIND_KEY, keybind)
-
-    val settings: List<Setting<*>> by lazy {
-        val list = mutableListOf<Setting<*>>()
-        var currentClass: Class<*>? = this::class.java
-        while (currentClass != null) {
-            for (field in currentClass.declaredFields) {
-                if (!Setting::class.java.isAssignableFrom(field.type)) continue
-                try {
-                    field.isAccessible = true
-                    field.get(this)?.let { setting ->
-                        if (setting is Setting<*>) {
-                            list.add(setting)
-                        }
-                    }
-                } catch (_: IllegalAccessException) {}
-            }
-            currentClass = currentClass.superclass
-        }
-        list.forEach { it.init(config) }
-        list
-    }
-
-    init {
-        setEnable(enable)
-        setKeybind(keybindCode)
-    }
-
-    fun onSettingUpdate(setting: Setting<*>) {}
-
-    protected open fun onEnable() {}
-
-    protected open fun onDisable() {}
-
-    fun isHiddenModule(): Boolean = category == null
-
-    fun getCategory(): Categories? = category
-
-    fun toggle() {
-        if (isToggleable()) {
-            setEnable(!this@Parent.enable)
-        }
-    }
-
-    fun setEnable(value: Boolean) {
-        config.set(ConfigManager.ENABLE_KEY, value)
-        this@Parent.enable = value
-
-        if (this@Parent.enable) {
-            EVENT_BUS.post(EventEnableModule(this))
-            onEnable()
-        } else {
-            EVENT_BUS.post(EventDisableModule(this))
-            onDisable()
-        }
-    }
-
-    open fun setKeybind(code: Int) {
-        config.set(ConfigManager.KEYBIND_KEY, code)
-        keybindCode = code
-    }
-
-    fun setValue(key: String, value: Any?) {
-        config.set(key, value)
-    }
-
-    fun <T : Any> getValue(name: String, defaultValue: T): T {
-        @Suppress("UNCHECKED_CAST")
-        return config.get(name, defaultValue)
-    }
-
-    fun resetSettings() {
-        settings.forEach { it.resetToDefault() }
-    }
-
     companion object {
         @JvmStatic
         val mc: MinecraftClient = MinecraftClient.getInstance()
@@ -101,5 +33,27 @@ abstract class Parent(
         fun fullNullCheck(): Boolean = mc.player == null || mc.world == null
     }
 
-    open fun isToggleable(): Boolean = true
+    private val config = ConfigManager("modules.$name")
+
+    var enable: Boolean = config["enabled", if (disableOnStartup) false else enabledByDefault]
+    open var keyBind: KeyBind = defaultKeyBind
+
+    open fun onEnable() {}
+    open fun onDisable() {}
+    open fun onToggle() {}
+
+    fun toggle() {
+        enable = !enable
+        onToggle()
+        if (enable) onEnable() else onDisable()
+    }
+
+    fun resetToDefault() {
+        enable = enabledByDefault
+        keyBind = defaultKeyBind
+    }
+
+    init {
+        ModuleManager.register(this)
+    }
 }

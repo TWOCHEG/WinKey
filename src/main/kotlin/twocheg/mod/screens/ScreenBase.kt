@@ -72,7 +72,7 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
         for (area in areas) {
             if (area.keyPressed(keyCode, scanCode, modifiers)) return true
         }
-        if (gui.showFactor.get() > 0.1 && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keybindCode)) {
+        if (gui.showFactor.get() == 1f && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keybindCode)) {
             gui.setEnable(false)
             return true
         }

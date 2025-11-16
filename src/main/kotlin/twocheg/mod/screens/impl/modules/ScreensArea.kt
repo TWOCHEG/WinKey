@@ -18,16 +18,18 @@ import twocheg.mod.utils.math.fromRGB
 import java.lang.reflect.Constructor
 import java.util.Arrays
 
-class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : RenderArea() {
+class ScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : RenderArea() {
     var currentGuiClass: T
     val defaultGuiClass: T
 
-    val selection = SelectionArea(this, { getValueArea(currentGuiClass) })
+    val selection = SelectionArea(this)
 
     var isSearch = false
     val searchDelta = Delta({ isSearch })
 
     init {
+        selection.targetArea = { getValueArea(currentGuiClass) }
+
         zIndex = 10f
 
         areas.clear()
@@ -109,8 +111,9 @@ class SelectScreensArea<T : Class<out Screen>>(vararg val guiClasses: T) : Rende
             (this.y + this.height - 1).toInt()
         )
 
-        if (searchDelta.get() < 0.1f) selection.render(context, matrix, 0f, 0f, null, null, mouseX, mouseY)
-        else selection.render(
+        if (searchDelta.get() < 0.1f) {
+            selection.render(context, matrix, this.x, this.y, null, null, mouseX, mouseY)
+        } else selection.render(
             context, matrix,
             this.x + PADDING,
             this.y + PADDING,

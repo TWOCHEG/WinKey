@@ -6,18 +6,19 @@ import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
-import twocheg.mod.utils.math.Lerp
+import twocheg.mod.utils.math.Spring
 import twocheg.mod.utils.math.fromRGB
 
 class SelectionArea(
     override val parentArea: RenderArea,
-    val targetArea: () -> RenderArea? = { null },
     val durationMs: Long = 400
 ) : RenderArea(parentArea) {
-    val targetX = Lerp(0f, durationMs)
-    val targetY = Lerp(0f, durationMs)
-    val targetWidth = Lerp(0f, durationMs)
-    val targetHeight = Lerp(0f, durationMs)
+    var targetArea: () -> RenderArea? = { null }
+
+    val targetX = Spring(0f)
+    val targetY = Spring(0f)
+    val targetWidth = Spring(0f)
+    val targetHeight = Spring(0f)
 
     override fun render(
         context: DrawContext,
@@ -29,49 +30,40 @@ class SelectionArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        var x = x
-        var y = y
+        var areaX = x
+        var areaY = y
         var width = width
         var height = height
 
-        val targetArea = targetArea()
-        if ((width == null || height == null) && targetArea != null) {
-            x = targetArea.x
-            y = targetArea.y
-            width = targetArea.width
-            height = targetArea.height
+        // предполагается то что рендер будет использоваться так, что величины никогда не будут null
+        if (targetArea() != null && (width == null && height == null)) {
+            areaX = targetArea()!!.x
+            areaY = targetArea()!!.y
+            width = targetArea()!!.width
+            height = targetArea()!!.height
         }
 
-        if (
-            targetX.target == 0f &&
-            targetY.target == 0f &&
-            targetWidth.target == 0f &&
-            targetHeight.target == 0f
-        ) {
-            targetX.forceSet(x)
-            targetY.forceSet(y)
-            targetWidth.forceSet(width!!)
-            targetHeight.forceSet(height!!)
-        } else {
-            targetX.set(x)
-            targetY.set(y)
-            targetWidth.set(width!!)
-            targetHeight.set(height!!)
-        }
+        targetX.set(areaX - x)
+        targetY.set(areaY - y)
+        targetWidth.set(width!!)
+        targetHeight.set(height!!)
+
+        val x = x + targetX.get()
+        val y = y + targetY.get()
 
         val rectangle = Builder.rectangle()
             .size(SizeState(targetWidth.get(), targetHeight.get()))
             .color(QuadColorState(fromRGB(0, 0, 0, 50 * showFactor.get())))
             .radius(QuadRadiusState(6f))
             .build()
-        rectangle.render(matrix, targetX.get(), targetY.get(), zIndex - 2)
+        rectangle.render(matrix, x, y, zIndex - 2)
         Builder.border()
             .size(rectangle.size)
             .color(QuadColorState(fromRGB(255, 255, 255, 18 * showFactor.get())))
             .radius(rectangle.radius)
             .thickness(0.1f)
             .build()
-            .render(matrix, targetX.get(), targetY.get(), zIndex - 2)
+            .render(matrix, x, y, zIndex - 2)
 
         super.render(context, matrix, x, y, width, height, mouseX, mouseY)
     }

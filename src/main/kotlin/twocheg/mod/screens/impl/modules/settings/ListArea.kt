@@ -18,6 +18,8 @@ class ListArea (
     override val parentArea: RenderArea,
     listSet: Setting<*>
 ) : SettingArea<Setting<*>>(parentArea, listSet) {
+    val selection = SelectionArea(this)
+
     init {
         @Suppress("CAST_NEVER_SUCCEEDS")
         for (option in listSet.getOptions()!!) {
@@ -28,9 +30,8 @@ class ListArea (
                 option.toString()
             ))
         }
+        selection.targetArea = { getValueArea(listSet.value) }
     }
-
-    val selection = SelectionArea(this, { getValueArea(listSet.value) })
 
     var expanded = false
     val expandedFactor = Delta({ expanded })
@@ -63,7 +64,7 @@ class ListArea (
         }
         renderY += 2f
 
-        selection.render(context, matrix, 0f, 0f, null, null, mouseX, mouseY)
+        selection.render(context, matrix, x, y, null, null, mouseX, mouseY)
 
         var renderX = x
         for (area in areas) {

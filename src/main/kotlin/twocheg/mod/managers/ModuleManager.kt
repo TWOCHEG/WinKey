@@ -1,23 +1,19 @@
 package twocheg.mod.managers
 
+import meteordevelopment.orbit.EventHandler
 import twocheg.mod.Categories
 import twocheg.mod.EVENT_BUS
-import twocheg.mod.modules.Parent
-
-import meteordevelopment.orbit.EventHandler
 import twocheg.mod.events.impl.EventDisableModule
 import twocheg.mod.events.impl.EventEnableModule
+import twocheg.mod.modules.Parent
 
-class ModuleManager(vararg modules: Parent) {
-    val modules = modules.toList()
+object ModuleManager {
+    private val modules = mutableListOf<Parent>()
+    val byCategory = mutableMapOf<Categories, MutableList<Parent>>()
 
-    fun getSorted(): Map<Categories?, List<Parent>> {
-        return modules
-            .groupBy { it.getCategory() }
-            .mapValues { (_, moduleList) ->
-                moduleList.sortedBy { it.name }
-            }
-            .toSortedMap(compareBy { it?.name })
+    fun register(module: Parent) {
+        modules.add(module)
+        byCategory.getOrPut(module.category) { mutableListOf() }.add(module)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -28,13 +24,18 @@ class ModuleManager(vararg modules: Parent) {
         return null
     }
 
-    fun enabledModules(): List<Parent> {
-        return modules.filter { it.enable }
-    }
+    fun getByCategory(category: Categories): List<Parent> = byCategory[category] ?: emptyList()
+    fun getCategories(): Set<Categories> = byCategory.keys
+
+    fun enableAll() = modules.forEach { it.enable = true }
+    fun disableAll() = modules.forEach { it.enable = false }
+    fun resetAll() = modules.forEach { it.resetToDefault() }
+
+    fun getEnabled(): List<Parent> = modules.filter { it.enable }
 
     fun init() {
         EVENT_BUS.subscribe(this)
-        enabledModules().forEach { EVENT_BUS.subscribe(it) } // да я не буду скрывать что я еблан и не умею делать нормальные архитектуры
+        getEnabled().forEach { EVENT_BUS.subscribe(it) }
     }
 
     @EventHandler

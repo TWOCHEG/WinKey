@@ -1,200 +1,236 @@
-// представляю, новый, крутой, удобный, полезный инструмент, мечта любого дизайнера читов на майнкрафт (да да это чистая правда)
-// автоматический расчитыватель значений 3000 инатор редми т ксяоми 21 про, сокращенно крутые классы для анимаций
 package twocheg.mod.utils.math
 
 import kotlin.math.*
 
-enum class AnimType {
-    EaseIn,
-    EaseOut,
-    EaseInOut,
-    Linear;
+data class EasingCurve(
+    val name: String? = null,
+    val interpolate: (t: Float) -> Float
+) {
+    companion object {
+        val Linear = EasingCurve("Linear") { it }
 
-    fun get(t: Float): Float {
-        return when (this) {
-            Linear -> t
-            EaseIn -> t * t
-            EaseOut -> 1f - (1f - t) * (1f - t)
-            EaseInOut -> {
-                if (t < 0.5f) {
-                    4f * t * t * t
-                } else {
-                    1f - (-2f * t + 2f).pow(3f) / 2f
-                }
+        val EaseIn = EasingCurve("EaseIn") { t -> t * t }
+        val EaseOut = EasingCurve("EaseOut") { t -> 1f - (1f - t).pow(2) }
+        val EaseInOut = EasingCurve("EaseInOut") { t ->
+            if (t < 0.5f) 4f * t * t * t else 1f - (-2f * t + 2f).pow(3f) / 2f
+        }
+
+        fun cubicBezier(x1: Float, y1: Float, x2: Float, y3: Float): EasingCurve =
+            EasingCurve("cubic-bezier($x1, $y1, $x2, $y3)") { t ->
+                cubicBezierInterpolate(t, x1, y1, x2, y3)
+            }
+
+        val Ease = cubicBezier(0.25f, 0.1f, 0.25f, 1.0f)
+        val EaseInSine = cubicBezier(0.12f, 0f, 0.39f, 0f)
+        val EaseOutSine = cubicBezier(0.61f, 1f, 0.88f, 1f)
+        val EaseInOutSine = cubicBezier(0.37f, 0f, 0.63f, 1f)
+
+        val BounceOut = EasingCurve("BounceOut") { t ->
+            when {
+                t < 1f / 2.75f -> 7.5625f * t * t
+                t < 2f / 2.75f -> 7.5625f * (t - 1.5f / 2.75f).pow(2) + 0.75f
+                t < 2.5f / 2.75f -> 7.5625f * (t - 2.25f / 2.75f).pow(2) + 0.9375f
+                else -> 7.5625f * (t - 2.625f / 2.75f).pow(2) + 0.984375f
             }
         }
     }
 }
 
+private fun cubicBezierInterpolate(t: Float, x1: Float, y1: Float, x2: Float, y3: Float): Float {
+    val cx = 3f * x1
+    val bx = 3f * (x2 - x1) - cx
+    val ax = 1f - cx - bx
+
+    val cy = 3f * y1
+    val by = 3f * (y3 - y1) - cy
+    val ay = 1f - cy - by
+
+    // решение уравнения: ax*t^3 + bx*t^2 + cx*t = input_t
+    fun solveCurveX(t: Float): Float = ((ax * t + bx) * t + cx) * t
+
+    // Ньютон-Рафсон для нахождения t по x
+    var t0 = t
+    repeat(6) {
+        val x = solveCurveX(t0) - t
+        if (x.absoluteValue < 1e-6f) return ((ay * t0 + by) * t0 + cy) * t0
+        val d = (3f * ax * t0 + 2f * bx) * t0 + cx
+        if (d.absoluteValue < 1e-6f) return ((ay * t0 + by) * t0 + cy) * t0
+        t0 -= x / d
+    }
+    return ((ay * t0 + by) * t0 + cy) * t0
+}
+
 class Delta(
-    val direct: () -> Boolean,
-    val durationMs: Long = 400,
-    val mode: AnimType = AnimType.EaseInOut,
-    val parentFactor: () -> Float = { 1f }
+    private val direction: () -> Boolean,
+    private val durationMs: Float = 400f,
+    private val curve: EasingCurve = EasingCurve.EaseInOut,
+    private val parentFactor: () -> Float = { 1f }
 ) {
-    private var lastUpdateTime: Long = 0
-    private var accumulatedTime: Float = 0f
-    private var targetDirection: Boolean = true
+    private val timer = Timer()
+    private var accumulatedMs: Float = 0f
+    private var lastDirection: Boolean = direction()
 
     init {
         reset()
     }
 
     fun reset() {
-        accumulatedTime = 0f
-        lastUpdateTime = System.nanoTime()
-        targetDirection = direct()
+        timer.reset()
+        accumulatedMs = 0f
+        lastDirection = direction()
     }
 
     fun setProgress(progress: Float) {
-        accumulatedTime = (progress.coerceIn(0f, 1f) * durationMs).coerceIn(0f, durationMs.toFloat())
-        lastUpdateTime = System.nanoTime()
-        targetDirection = direct()
+        accumulatedMs = (progress.coerceIn(0f, 1f) * durationMs).coerceIn(0f, durationMs)
+        timer.setElapsedMs(0f)
+        lastDirection = direction()
     }
 
     fun get(): Float {
-        val now = System.nanoTime()
-        val deltaMs = (now - lastUpdateTime) / 1_000_000f
-        lastUpdateTime = now
+        val deltaMs = timer.elapsedMs()
+        timer.reset()
 
-        accumulatedTime += if (targetDirection) deltaMs else -deltaMs
-        accumulatedTime = accumulatedTime.coerceIn(0f, durationMs.toFloat())
-        checkDirectionChange()
-        return calculateProgress() * parentFactor()
-    }
-
-    private fun checkDirectionChange() {
-        val desiredDirection = direct()
-        if (desiredDirection != targetDirection) {
-            targetDirection = desiredDirection
-            lastUpdateTime = System.nanoTime()
+        val currentDir = direction()
+        if (currentDir != lastDirection) {
+            lastDirection = currentDir
+            timer.reset()
+            return getCurrentProgress()
         }
+
+        accumulatedMs += if (currentDir) deltaMs else -deltaMs
+        accumulatedMs = accumulatedMs.coerceIn(0f, durationMs)
+
+        return getCurrentProgress()
     }
 
-    private fun calculateProgress(): Float {
-        if (durationMs <= 0) return 1f
-        val linearProgress = accumulatedTime / durationMs
-        return mode.get(linearProgress).coerceIn(0f, 1f)
+    private fun getCurrentProgress(): Float {
+        val t = (accumulatedMs / durationMs).coerceIn(0f, 1f)
+        return curve.interpolate(t) * parentFactor()
     }
 }
 
 class Pulse(
-    val direct: () -> Boolean,
-    val durationMs: Long = 800,
-    val parentFactor: () -> Float = { 1f }
+    private val direct: () -> Boolean,
+    private val durationMs: Float = 800f,
+    private val parentFactor: () -> Float = { 1f }
 ) {
-    private var accumulatedTime: Float = 0f
-    private var lastUpdateTime: Long = 0
-    private var targetDirection: Boolean = true
+    private val timer = Timer()
+    private var accumulatedMs: Float = 0f
+    private var lastDirection: Boolean = direct()
 
     init {
         reset()
     }
 
     fun reset() {
-        accumulatedTime = 0f
-        lastUpdateTime = System.nanoTime()
-        targetDirection = direct()
+        timer.reset()
+        accumulatedMs = 0f
+        lastDirection = direct()
     }
 
     fun get(): Float {
-        val now = System.nanoTime()
-        val deltaMs = (now - lastUpdateTime) / 1_000_000f
-        lastUpdateTime = now
+        val deltaMs = timer.elapsedMs()
+        timer.reset()
 
-        val desiredDirection = direct()
+        val currentDir = direct()
 
-        if (desiredDirection != targetDirection) {
-            targetDirection = desiredDirection
-            lastUpdateTime = now
+        if (currentDir != lastDirection) {
+            lastDirection = currentDir
+            timer.reset()
         }
 
-        if (targetDirection) {
-            accumulatedTime += deltaMs
+        if (currentDir) {
+            accumulatedMs += deltaMs
         } else {
-            val decayFactor = 1f - (deltaMs / durationMs).coerceAtMost(1f)
-            accumulatedTime = (accumulatedTime * decayFactor).coerceAtLeast(0f)
+            val decaySpeed = deltaMs / durationMs
+            accumulatedMs = (accumulatedMs * (1f - decaySpeed)).coerceAtLeast(0f)
         }
 
-        return calculateProgress() * parentFactor()
+        return calculatePulse() * parentFactor()
     }
 
-    private fun calculateProgress(): Float {
-        return if (targetDirection) {
-            calculateSinePulseProgress()
-        } else {
-            val pulseValue = calculateSinePulseProgress()
-            val decay = accumulatedTime / durationMs
-            pulseValue * (1f - decay)
-        }
-    }
+    private fun calculatePulse(): Float {
+        if (accumulatedMs <= 0f) return 0f
 
-    private fun calculateSinePulseProgress(): Float {
-        if (durationMs <= 0) return 0f
-        val phase = (accumulatedTime % durationMs) / durationMs
-        val angle = Math.PI * phase
-        return sin(angle).toFloat().coerceIn(0f, 1f)
+        val phase = (accumulatedMs % durationMs) / durationMs
+        val sine = sin(Math.PI * phase).toFloat().coerceIn(0f, 1f)
+
+        val amplitude = (accumulatedMs / durationMs) - (accumulatedMs / durationMs).toInt()
+
+        return sine * amplitude
     }
 }
 
-class Lerp(
-    val initialValue: Float,
-    durationMs: Long = 200,
-    val mode: AnimType = AnimType.EaseInOut
+class Spring(
+    initialValue: Float,
+    private val stiffness: Float = 300f,
+    private val damping: Float = 25f,
+    private val mass: Float = 1f
 ) {
+    private val timer = Timer()
+    private var velocity: Float = 0f
+
     var current: Float = initialValue
         private set
     var target: Float = initialValue
-    private val durationSec = durationMs.coerceAtLeast(1L) / 1000f
-    private var lastTime: Long? = null
+        private set
 
     fun set(newTarget: Float) {
-        if (newTarget == target && lastTime != null) return
         target = newTarget
-        if (lastTime == null) {
-            lastTime = System.nanoTime()
-            current = initialValue
-        }
     }
 
-    fun forceSet(newValue: Float) {
-        current = newValue
-        target = newValue
-        lastTime = System.nanoTime()
+    fun forceSet(value: Float) {
+        target = value
+        current = value
+        velocity = 0f
+        timer.reset()
     }
 
     fun get(): Float {
-        if (current == target) {
-            lastTime = System.nanoTime()
-            return current
-        }
+        val dt = timer.deltaTimeSec()
+        if (dt <= 0f) return current
 
-        val now = System.nanoTime()
-        val startTime = lastTime ?: now
-        val elapsedSec = (now - startTime) / 1e9f
-
-        lastTime = now
-
-        if (elapsedSec >= durationSec) {
-            current = target
-            return current
-        }
-
-        val dt = (now - startTime).coerceAtMost(100_000_000L) / 1e9f
-            .coerceAtLeast(0.001f)
-
-        val tau = durationSec / 6.907f
-        val k = 1f - exp(-dt / tau)
-
-        val easedK = mode.get(k).coerceIn(0f, 1f)
-
-        current += (target - current) * easedK
-
-        val diff = abs(target - current)
-        if (diff < 1e-4f || (target != 0f && diff / abs(target) < 1e-4f)) {
-            current = target
-        }
-
+        update(dt)
         return current
+    }
+
+    private fun update(dt: Float) {
+        val displacement = target - current
+        val springForce = stiffness * displacement
+        val dampingForce = damping * velocity
+        val acceleration = (springForce - dampingForce) / mass
+
+        velocity += acceleration * dt
+        current += velocity * dt
+
+        val eps = 1e-4f
+        if (abs(displacement) < eps && abs(velocity) < eps) {
+            current = target
+            velocity = 0f
+        }
+    }
+}
+
+class Hybrid(
+    initialValue: Float,
+    durationMs: Float = 200f,
+) {
+    private val spring = Spring(initialValue, 300f, 25f)
+    private val minDurationTimer = Timer()
+    private val minDurationNs = (durationMs * 1e6f).toLong()
+
+    fun set(newTarget: Float) {
+        if (minDurationTimer.elapsedNs() > minDurationNs) {
+            spring.forceSet(spring.current)
+            minDurationTimer.reset()
+        }
+        spring.set(newTarget)
+    }
+
+    fun get(): Float = spring.get()
+
+    fun forceSet(v: Float) {
+        spring.forceSet(v)
+        minDurationTimer.reset()
     }
 }

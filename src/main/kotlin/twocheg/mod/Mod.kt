@@ -19,13 +19,6 @@ val EVENT_BUS: IEventBus = EventBus()
 const val VERSION = "0.0.1"
 const val NAME_SPACE = "twocheg.mod"
 
-val friendsManager = FriendsManager()
-val moduleManager = ModuleManager(
-    KeyBinds(),
-    ClickGui(),
-    Example()
-)
-
 enum class Categories {
     combat, client, example, render, misc
 }
@@ -37,7 +30,7 @@ fun init() {
     EVENT_BUS.registerLambdaFactory(NAME_SPACE) { lookupInMethod, klass ->
         lookupInMethod.invoke(null, klass, MethodHandles.lookup()) as MethodHandles.Lookup?
     }
-    moduleManager.init()
+    ModuleManager.init()
 }
 
 fun isFuturePresent(): Boolean = FabricLoader.getInstance().getModContainer("future").isPresent

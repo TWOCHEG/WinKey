@@ -2,9 +2,6 @@ package twocheg.mod.managers
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
-import kotlinx.serialization.json.JsonPrimitive
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -12,155 +9,109 @@ import java.nio.file.StandardOpenOption
 
 typealias JsonMap = MutableMap<String, Any>
 
-@Suppress("UNCHECKED_CAST")
-class ConfigManager(
-    var keyPath: String? = null
-) {
-    fun <T> get(key: String, default: T): T {
-        return get(getCurrent(), key, default)
-    }
-    fun <T> get(path: Path, key: String, default: T): T {
-        var key = key
-        val json = readJson(path)
-        if (keyPath != null) {
-            key = "$keyPath.$key"
-        }
+val GSON: Gson = GsonBuilder()
+    .disableHtmlEscaping()
+    .setPrettyPrinting()
+    .create()
 
-        val rawValue = json[key] ?: return default
+val CONFIG_DIR: Path = Path.of(System.getProperty("user.home"), ".dl")
+const val FILE_EXT: String = ".json"
+const val DEFAULT_PROFILE = "default"
 
-        return when (default) {
-            is Number -> {
-                if (rawValue is Number) {
-                    @Suppress("UNCHECKED_CAST")
-                    when (default) {
-                        is Int -> rawValue.toInt() as T
-                        is Long -> rawValue.toLong() as T
-                        is Float -> rawValue.toFloat() as T
-                        is Double -> rawValue.toDouble() as T
-                        is Short -> rawValue.toShort() as T
-                        is Byte -> rawValue.toByte() as T
-                        else -> default
-                    }
-                } else {
-                    default
-                }
-            }
-            is Boolean -> {
-                when (rawValue) {
-                    is Boolean -> rawValue as T
-                    is String -> rawValue.toBoolean() as T
-                    is Number -> (rawValue.toInt() != 0) as T
-                    else -> default
-                }
-            }
-            is String -> {
-                rawValue.toString() as T
-            }
-            else -> {
-                try {
-                    @Suppress("UNCHECKED_CAST")
-                    rawValue as T
-                } catch (e: ClassCastException) {
-                    default
-                }
-            }
-        }
-    }
+fun ensureConfigDir(): Path = Files.createDirectories(CONFIG_DIR)
 
-    fun <T> set(key: String, value: T) {
-        set(getCurrent(), key, value)
-    }
-    fun <T> set(path: Path, key: String, value: T) {
-        var key = key
-        if (keyPath != null) key = "$keyPath.$key"
-        val readJson = readJson(path)
-        readJson[key] = value as Any
-        writeJson(path, readJson)
-    }
-
+data class ConfigProfile(val name: String, val path: Path) {
     companion object {
-        val GSON: Gson = GsonBuilder()
-            .disableHtmlEscaping()
-            .setPrettyPrinting()
-            .create()
+        fun current(): ConfigProfile = ConfigProfile(getCurrentProfileName(), getCurrentProfilePath())
+    }
+}
 
-        val CONFIG_DIR: Path = Path.of(System.getProperty("user.home"), ".dl")
+fun getCurrentProfilePath(): Path {
+    ensureConfigDir()
+    val files = Files.list(CONFIG_DIR)
+        .filter { it.toString().endsWith(FILE_EXT) && Files.isRegularFile(it) }
+        .toList()
 
-        const val CURRENT_KEY: String = "current"
-        const val KEYBIND_KEY: String = "keybind"
-        const val ENABLE_KEY: String = "enable"
-        const val FILE_EXT: String = ".json"
-        const val DEFAULT_NAME: String = "default"
+    if (files.isEmpty()) {
+        return createDefaultProfile()
+    }
 
-        fun onChangeCurrent(old: Path, new: Path) {}
+    files.forEach { path ->
+        val json = readJson(path)
+        if (json["current"] == true) return path
+    }
+    return files.first()
+}
 
-        fun getCurrent(): Path {
-            if (!Files.exists(CONFIG_DIR)) {
-                Files.createDirectories(CONFIG_DIR)
+fun getCurrentProfileName(): String = getCurrentProfilePath().fileName.toString().removeSuffix(FILE_EXT)
+
+private fun createDefaultProfile(): Path {
+    val path = CONFIG_DIR.resolve("$DEFAULT_PROFILE$FILE_EXT")
+    writeJson(path, mutableMapOf("current" to true))
+    return path
+}
+
+fun setCurrentProfile(name: String) {
+    val newPath = CONFIG_DIR.resolve("$name$FILE_EXT")
+    if (!Files.exists(newPath)) {
+        writeJson(newPath, mutableMapOf("current" to true))
+    }
+    val oldPath = getCurrentProfilePath()
+    if (oldPath == newPath) return
+
+    writeJson(newPath, readJson(newPath).apply { this["current"] = true })
+    writeJson(oldPath, readJson(oldPath).apply { this["current"] = false })
+}
+
+fun readJson(path: Path): JsonMap = try {
+    if (Files.isRegularFile(path)) {
+        val content = Files.readString(path, StandardCharsets.UTF_8)
+        if (content.isNotBlank()) {
+            GSON.fromJson(content, object : com.google.gson.reflect.TypeToken<JsonMap>() {}.type) ?: mutableMapOf()
+        } else mutableMapOf()
+    } else mutableMapOf()
+} catch (e: Exception) {
+    e.printStackTrace()
+    mutableMapOf()
+}
+
+fun writeJson(path: Path, json: JsonMap) {
+    val content = GSON.toJson(json)
+    Files.writeString(path, content, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+}
+
+class ConfigManager(private val keyPath: String? = null) {
+    private val currentPath get() = getCurrentProfilePath()
+
+    operator fun <T> get(key: String, default: T): T = get(currentPath, key, default)
+    operator fun <T> get(path: Path, key: String, default: T): T {
+        val fullKey = if (keyPath != null) "$keyPath.$key" else key
+        val value = readJson(path)[fullKey] ?: return default
+
+        @Suppress("UNCHECKED_CAST")
+        return when (default) {
+            is Boolean -> when (value) {
+                is Boolean -> value as T
+                is String -> value.toBoolean() as T
+                is Number -> (value.toInt() != 0) as T
+                else -> default
             }
-
-            val files = Files.list(CONFIG_DIR)
-                .filter { Files.isRegularFile(it) && it.toString().endsWith(FILE_EXT) }
-                .toList()
-
-            if (files.isEmpty()) {
-                val exampleFile = CONFIG_DIR.resolve("$DEFAULT_NAME$FILE_EXT")
-                return exampleFile
-            } else {
-                files.forEach {
-                    val json = readJson(it)
-                    val current = json[CURRENT_KEY] as? JsonPrimitive
-                    val isCurrent = current?.toString().toBoolean()
-                    if (isCurrent) return it
-                }
-                return files.first()
-            }
-        }
-        fun setCurrent(new: Path) {
-            val old = getCurrent()
-            if (old == new) return
-
-            val json1 = readJson(new)
-            json1[CURRENT_KEY] = true
-            writeJson(new, json1)
-
-            val json2 = readJson(old)
-            json1[CURRENT_KEY] = false
-            writeJson(new, json2)
-
-            onChangeCurrent(old, new)
-        }
-
-        fun writeJson(path: Path, json: JsonMap) {
-            val jsonOutput: String = GSON.toJson(json)
-            Files.writeString(
-                path,
-                jsonOutput,
-                StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING
-            )
-        }
-        fun writeJson(json: JsonMap) {
-            writeJson(getCurrent(), json)
-        }
-        fun readJson(path: Path): JsonMap {
-            try {
-                if (Files.exists(path) && Files.isRegularFile(path)) {
-                    val content = Files.readString(path, StandardCharsets.UTF_8)
-                    if (content.isNotBlank()) {
-                        val type = object : TypeToken<JsonMap>() {}.type
-                        val json = GSON.fromJson<JsonMap>(content, type)
-                        return json ?: mutableMapOf()
-                    }
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-            return mutableMapOf()
-        }
-        fun readJson(): JsonMap {
-            return readJson(getCurrent())
+            is Int -> (value as? Number)?.toInt() as T ?: default
+            is Long -> (value as? Number)?.toLong() as T ?: default
+            is Float -> (value as? Number)?.toFloat() as T ?: default
+            is Double -> (value as? Number)?.toDouble() as T ?: default
+            is String -> value.toString() as T
+            else -> try { value as T } catch (e: Exception) { default }
         }
     }
+
+    operator fun <T> set(key: String, value: T) = set(currentPath, key, value)
+    operator fun <T> set(path: Path, key: String, value: T) {
+        val fullKey = if (keyPath != null) "$keyPath.$key" else key
+        val json = readJson(path)
+        json[fullKey] = value as Any
+        writeJson(path, json)
+    }
+
+    fun sub(path: String) = ConfigManager(if (keyPath != null) "$keyPath.$path" else path)
 }

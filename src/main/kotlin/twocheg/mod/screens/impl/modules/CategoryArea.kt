@@ -11,19 +11,17 @@ import twocheg.mod.builders.states.SizeState
 import twocheg.mod.moduleManager
 import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
-import twocheg.mod.renderers.impl.BuiltBlur
-import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
-import twocheg.mod.utils.math.AnimType
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.Lerp
+import twocheg.mod.utils.math.EasingCurve
+import twocheg.mod.utils.math.Spring
 import twocheg.mod.utils.math.fromRGB
 
 class CategoryArea(
     val category: Categories,
     val modules: List<Parent>
 ) : RenderArea() {
-    val targetHeight = Lerp(0f)
+    val targetHeight = Spring(0f)
 
     companion object {
         const val MODULE_PADDING = 5f
@@ -36,7 +34,7 @@ class CategoryArea(
     }
 
     init {
-        showFactor = Delta({ show }, mode = AnimType.EaseOut)
+        showFactor = Delta({ show }, curve = EasingCurve.EaseOut)
         for (module in modules) areas.add(ModuleArea(module, this))
     }
 
@@ -50,7 +48,8 @@ class CategoryArea(
         mouseX: Double,
         mouseY: Double
     ) {
-        this.y = y - 100 * (1 - showFactor.get())
+        val yDiff = 100 * (1 - showFactor.get())
+        this.y = y - yDiff
 
         val text = Builder.text()
             .font(bikoFont.get())
@@ -129,8 +128,8 @@ class CategoryArea(
             renderY += area.height + MODULE_PADDING
         }
 
-        if (targetHeight.target == 0f) { targetHeight.forceSet(renderY - y) }
-        targetHeight.set(renderY - y)
+        if (targetHeight.target == 0f) { targetHeight.forceSet(renderY - y + yDiff) }
+        targetHeight.set(renderY - y + yDiff)
 
         super.render(context, matrix, x, this.y, width, targetHeight.get(), mouseX, mouseY)
     }

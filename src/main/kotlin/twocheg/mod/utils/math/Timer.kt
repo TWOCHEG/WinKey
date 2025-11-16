@@ -1,41 +1,50 @@
 package twocheg.mod.utils.math
 
 class Timer {
-    private var time: Long = 0
+    private var startTimeNs: Long = 0
 
     init {
         reset()
     }
 
-    fun passedS(s: Double): Boolean {
-        return getMs(System.nanoTime() - time) >= (s * 1000.0).toLong()
-    }
-
-    fun passedMs(ms: Long): Boolean {
-        return getMs(System.nanoTime() - time) >= ms
-    }
-
-    fun every(ms: Long): Boolean {
-        val passed = getMs(System.nanoTime() - time) >= ms
-        if (passed) reset()
-        return passed
-    }
-
-    fun setMs(ms: Long) {
-        this.time = System.nanoTime() - ms * 1000000L
-    }
-
     val passedTimeMs: Long
-        get() = getMs(System.nanoTime() - time)
-
-    fun reset() {
-        this.time = System.nanoTime()
-    }
+        get() = getMs(System.nanoTime() - startTimeNs)
 
     fun getMs(time: Long): Long {
         return time / 1000000L
     }
 
-    val timeMs: Long
-        get() = getMs(System.nanoTime() - time)
+    fun reset() {
+        startTimeNs = System.nanoTime()
+    }
+
+    fun elapsedMs(): Float {
+        return (System.nanoTime() - startTimeNs) / 1_000_000f
+    }
+
+    fun elapsedNs(): Long {
+        return System.nanoTime() - startTimeNs
+    }
+
+    fun setElapsedMs(ms: Float) {
+        startTimeNs = System.nanoTime() - (ms * 1_000_000f).toLong()
+    }
+
+    fun passedMs(ms: Float): Boolean = elapsedMs() >= ms
+    fun passedS(s: Float): Boolean = passedMs(s * 1000f)
+
+    fun everyMs(ms: Float): Boolean {
+        if (passedMs(ms)) {
+            reset()
+            return true
+        }
+        return false
+    }
+
+    fun deltaTimeSec(): Float {
+        val now = System.nanoTime()
+        val deltaNs = now - startTimeNs
+        startTimeNs = now
+        return deltaNs / 1e9f
+    }
 }
