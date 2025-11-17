@@ -1,3 +1,5 @@
+// представляю, новый, крутой, удобный, полезный инструмент, мечта любого дизайнера читов на майнкрафт (да да это чистая правда)
+// автоматический расчитыватель значений 3000 инатор редми т ксяоми 21 про, сокращенно крутые классы для анимаций
 package twocheg.mod.utils.math
 
 import kotlin.math.*
@@ -66,8 +68,8 @@ class Delta(
     private val curve: EasingCurve = EasingCurve.EaseInOut,
     private val parentFactor: () -> Float = { 1f }
 ) {
-    private val timer = Timer()
-    private var accumulatedMs: Float = 0f
+    private var startTime: Long = 0
+    private var accumulated: Float = 0f
     private var lastDirection: Boolean = direction()
 
     init {
@@ -75,89 +77,94 @@ class Delta(
     }
 
     fun reset() {
-        timer.reset()
-        accumulatedMs = 0f
+        startTime = System.nanoTime()
+        accumulated = 0f
         lastDirection = direction()
     }
 
     fun setProgress(progress: Float) {
-        accumulatedMs = (progress.coerceIn(0f, 1f) * durationMs).coerceIn(0f, durationMs)
-        timer.setElapsedMs(0f)
+        accumulated = (progress.coerceIn(0f, 1f) * durationMs).coerceIn(0f, durationMs)
+        startTime = System.nanoTime()
         lastDirection = direction()
     }
 
     fun get(): Float {
-        val deltaMs = timer.elapsedMs
-        timer.reset()
+        val now = System.nanoTime()
+        val deltaNs = now - startTime
+        startTime = now
 
-        val currentDir = direction()
-        if (currentDir != lastDirection) {
-            lastDirection = currentDir
-            timer.reset()
-            return getCurrentProgress()
+        val deltaMs = deltaNs / 1_000_000f
+        val dir = direction()
+
+        if (dir != lastDirection) {
+            lastDirection = dir
+            startTime = now
         }
 
-        accumulatedMs += if (currentDir) deltaMs else -deltaMs
-        accumulatedMs = accumulatedMs.coerceIn(0f, durationMs)
+        accumulated += if (dir) deltaMs else -deltaMs
+        accumulated = accumulated.coerceIn(0f, durationMs)
 
-        return getCurrentProgress()
-    }
-
-    private fun getCurrentProgress(): Float {
-        val t = (accumulatedMs / durationMs).coerceIn(0f, 1f)
+        val t = (accumulated / durationMs).coerceIn(0f, 1f)
         return curve.interpolate(t) * parentFactor()
     }
 }
 
 class Pulse(
-    private val direct: () -> Boolean,
-    private val durationMs: Float = 800f,
-    private val parentFactor: () -> Float = { 1f }
+    val direct: () -> Boolean,
+    val durationMs: Long = 800,
+    val parentFactor: () -> Float = { 1f }
 ) {
-    private val timer = Timer()
-    private var accumulatedMs: Float = 0f
-    private var lastDirection: Boolean = direct()
+    private var accumulatedTime: Float = 0f
+    private var lastUpdateTime: Long = 0
+    private var targetDirection: Boolean = true
 
     init {
         reset()
     }
 
     fun reset() {
-        timer.reset()
-        accumulatedMs = 0f
-        lastDirection = direct()
+        accumulatedTime = 0f
+        lastUpdateTime = System.nanoTime()
+        targetDirection = direct()
     }
 
     fun get(): Float {
-        val deltaMs = timer.elapsedMs
-        timer.reset()
+        val now = System.nanoTime()
+        val deltaMs = (now - lastUpdateTime) / 1_000_000f
+        lastUpdateTime = now
 
-        val currentDir = direct()
+        val desiredDirection = direct()
 
-        if (currentDir != lastDirection) {
-            lastDirection = currentDir
-            timer.reset()
+        if (desiredDirection != targetDirection) {
+            targetDirection = desiredDirection
+            lastUpdateTime = now
         }
 
-        if (currentDir) {
-            accumulatedMs += deltaMs
+        if (targetDirection) {
+            accumulatedTime += deltaMs
         } else {
-            val decaySpeed = deltaMs / durationMs
-            accumulatedMs = (accumulatedMs * (1f - decaySpeed)).coerceAtLeast(0f)
+            val decayFactor = 1f - (deltaMs / durationMs).coerceAtMost(1f)
+            accumulatedTime = (accumulatedTime * decayFactor).coerceAtLeast(0f)
         }
 
-        return calculatePulse() * parentFactor()
+        return calculateProgress() * parentFactor()
     }
 
-    private fun calculatePulse(): Float {
-        if (accumulatedMs <= 0f) return 0f
+    private fun calculateProgress(): Float {
+        return if (targetDirection) {
+            calculateSinePulseProgress()
+        } else {
+            val pulseValue = calculateSinePulseProgress()
+            val decay = accumulatedTime / durationMs
+            pulseValue * (1f - decay)
+        }
+    }
 
-        val phase = (accumulatedMs % durationMs) / durationMs
-        val sine = sin(Math.PI * phase).toFloat().coerceIn(0f, 1f)
-
-        val amplitude = (accumulatedMs / durationMs) - (accumulatedMs / durationMs).toInt()
-
-        return sine * amplitude
+    private fun calculateSinePulseProgress(): Float {
+        if (durationMs <= 0) return 0f
+        val phase = (accumulatedTime % durationMs) / durationMs
+        val angle = Math.PI * phase
+        return sin(angle).toFloat().coerceIn(0f, 1f)
     }
 }
 
@@ -167,13 +174,13 @@ class Spring(
     private val damping: Float = 25f,
     private val mass: Float = 1f
 ) {
-    private val timer = Timer()
-    private var velocity: Float = 0f
-
     var current: Float = initialValue
         private set
     var target: Float = initialValue
         private set
+
+    private var velocity: Float = 0f
+    private var lastTimeNs: Long = System.nanoTime()
 
     fun set(newTarget: Float) {
         target = newTarget
@@ -183,14 +190,17 @@ class Spring(
         target = value
         current = value
         velocity = 0f
-        timer.reset()
+        lastTimeNs = System.nanoTime()
     }
 
     fun get(): Float {
-        val dt = timer.deltaTimeSec
-        if (dt <= 0f) return current
+        val now = System.nanoTime()
+        val deltaTimeSec = (now - lastTimeNs) / 1e9f
+        lastTimeNs = now
 
-        update(dt)
+        if (deltaTimeSec <= 0f) return current
+
+        update(deltaTimeSec)
         return current
     }
 
@@ -215,22 +225,20 @@ class Hybrid(
     initialValue: Float,
     durationMs: Float = 200f,
 ) {
-    private val spring = Spring(initialValue, 300f, 25f)
-    private val minDurationTimer = Timer()
+    private var spring = Spring(initialValue, 300f, 25f)
+    private var lastSetTime = 0L
     private val minDurationNs = (durationMs * 1e6f).toLong()
 
     fun set(newTarget: Float) {
-        if (minDurationTimer.elapsedNs > minDurationNs) {
+        val now = System.nanoTime()
+        if (now - lastSetTime > minDurationNs) {
             spring.forceSet(spring.current)
-            minDurationTimer.reset()
         }
         spring.set(newTarget)
+        lastSetTime = now
     }
 
     fun get(): Float = spring.get()
 
-    fun forceSet(v: Float) {
-        spring.forceSet(v)
-        minDurationTimer.reset()
-    }
+    fun forceSet(v: Float) = spring.forceSet(v)
 }
