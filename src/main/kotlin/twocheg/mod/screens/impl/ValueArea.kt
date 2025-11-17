@@ -6,7 +6,7 @@ import twocheg.mod.bikoFont
 import twocheg.mod.builders.Builder
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 import java.util.function.Consumer
 import java.util.function.Supplier
 

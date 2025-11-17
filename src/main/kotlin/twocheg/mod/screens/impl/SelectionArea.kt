@@ -7,7 +7,7 @@ import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.QuadRadiusState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.utils.math.Spring
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 
 class SelectionArea(
     override val parentArea: RenderArea,

@@ -12,8 +12,8 @@ import twocheg.mod.screens.impl.ValueArea
 import twocheg.mod.settings.ListSettings
 import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
-import twocheg.mod.utils.math.splitText
+import twocheg.mod.utils.math.ColorUtils.fromRGB
+import twocheg.mod.utils.math.MathUtils.splitText
 
 class ListArea (
     override val parentArea: RenderArea,

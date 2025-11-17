@@ -14,7 +14,7 @@ import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.screens.impl.SelectionArea
 import twocheg.mod.screens.impl.ValueArea
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 import java.lang.reflect.Constructor
 import java.util.Arrays
 

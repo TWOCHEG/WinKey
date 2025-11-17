@@ -13,9 +13,8 @@ import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.EasingCurve
 import twocheg.mod.utils.math.Spring
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 
 class CategoryArea(
     val category: Categories,

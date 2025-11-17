@@ -3,7 +3,8 @@
   "package": "twocheg.mod.mixins",
   "compatibilityLevel": "JAVA_22",
   "client": [
-    "MixinKeyboard"
+    "MixinKeyboard",
+    "MixinMinecraftClient"
   ],
   "injectors": {
     "defaultRequire": 1

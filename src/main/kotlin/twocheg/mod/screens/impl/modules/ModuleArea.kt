@@ -17,9 +17,8 @@ import twocheg.mod.screens.impl.modules.settings.SettingArea
 import twocheg.mod.settings.BooleanSetting
 import twocheg.mod.settings.ListSettings
 import twocheg.mod.settings.Setting
-import twocheg.mod.settings.SettingBase
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 
 class ModuleArea(
     val module: Parent,

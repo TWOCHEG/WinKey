@@ -5,19 +5,18 @@ import twocheg.mod.Categories
 import twocheg.mod.managers.ConfigManager
 import twocheg.mod.managers.ModuleManager
 import twocheg.mod.settings.Setting
-import twocheg.mod.settings.SettingBase
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 
 abstract class Parent(
-    val name: String,
-    val description: String? = null,
+    override val name: String,
+    override val description: String? = null,
     val category: Categories,
     val enabledByDefault: Boolean = false,
     val disableOnStartup: Boolean = false,
     val visibleInUI: Boolean = true,
     var defaultKeyBind: Int = -1
-) {
+) : Module {
     companion object {
         @JvmStatic
         val mc: MinecraftClient = MinecraftClient.getInstance()
@@ -30,12 +29,12 @@ abstract class Parent(
 
     protected val config = ConfigManager("modules.$name")
 
-    var enable: Boolean = if (disableOnStartup) false else config["enabled", enabledByDefault]
+    override var enable: Boolean = if (disableOnStartup) false else config["enabled", enabledByDefault]
         set(e) {
             config["enable"] = e
             field = e
         }
-    open var keyBind: Int = config["keybind", defaultKeyBind]
+    override var keybind: Int = config["keybind", defaultKeyBind]
         set(k) {
             config["keybind"] = k
             field = k
@@ -45,7 +44,7 @@ abstract class Parent(
     open fun onDisable() {}
     open fun onToggle() {}
 
-    fun toggle() {
+     override fun toggle() {
         enable = !enable
         onToggle()
         if (enable) onEnable() else onDisable()
@@ -53,10 +52,10 @@ abstract class Parent(
 
     fun resetToDefault() {
         enable = enabledByDefault
-        keyBind = defaultKeyBind
+        keybind = defaultKeyBind
     }
 
-    open fun init() {
+    override fun init() {
         this::class.declaredMemberProperties.forEach { prop ->
             prop.isAccessible = true
             val value = prop.getter.call(this)

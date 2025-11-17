@@ -19,9 +19,9 @@ class ClickGui : Parent(
     disableOnStartup = true,
     defaultKeyBind = GLFW.GLFW_KEY_RIGHT_SHIFT
 ) {
-    val openFactor = Delta({ enable })
+    val openFactor = Delta(this::enable)
 
-    override var keyBind: Int = config["keybind", defaultKeyBind]
+    override var keybind: Int = config["keybind", defaultKeyBind]
         set(k) {
             if (k != -1) {
                 config["keybind"] = k
@@ -45,6 +45,7 @@ class ClickGui : Parent(
     }
 
     override fun onEnable() {
+        println(openFactor.get())
         if (categories.isEmpty()) {
             for ((category, moduleList) in ModuleManager.byCategory) {
                 categories.add(CategoryArea(category, moduleList))

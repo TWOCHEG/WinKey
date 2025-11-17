@@ -13,7 +13,7 @@ import twocheg.mod.managers.ModuleManager
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.modules.Parent
 import twocheg.mod.modules.client.ClickGui
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 
 
 open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
@@ -72,7 +72,7 @@ open class ScreenBase(open val name: String) : Screen(Text.literal(name)) {
         for (area in areas) {
             if (area.keyPressed(keyCode, scanCode, modifiers)) return true
         }
-        if (gui.openFactor.get() == 1f && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keyBind)) {
+        if (gui.openFactor.get() == 1f && (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == gui.keybind)) {
             gui.enable = false
             return true
         }

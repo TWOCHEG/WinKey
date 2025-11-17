@@ -18,7 +18,7 @@ class KeyBinds : Parent(
     private fun keyPress(e: EventKeyPress) {
         if (mc.currentScreen == null || mc.currentScreen is TitleScreen) {
             ModuleManager.modules.forEach {
-                if (e.keyCode == it.keyBind) it.toggle()
+                if (e.keyCode == it.keybind) it.toggle()
             }
         }
     }

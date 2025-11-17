@@ -7,10 +7,10 @@ import twocheg.mod.builders.Builder
 import twocheg.mod.builders.states.QuadColorState
 import twocheg.mod.builders.states.SizeState
 import twocheg.mod.renderers.impl.BuiltRectangle
-import twocheg.mod.utils.client.hoverCheck
+import twocheg.mod.utils.client.MouseUtils.hoverCheck
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
-import twocheg.mod.utils.math.random
+import twocheg.mod.utils.math.ColorUtils.fromRGB
+import twocheg.mod.utils.math.MathUtils.random
 
 
 abstract class RenderArea(
@@ -26,7 +26,7 @@ abstract class RenderArea(
     internal var zIndex: Float
 
     init {
-        showFactor = Delta({ show }, parentFactor = { parentArea?.showFactor?.get() ?: 1f })
+        showFactor = Delta(this::show, parentFactor = { parentArea?.showFactor?.get() ?: 1f })
         zIndex = (parentArea?.zIndex ?: 0f) + 3f
     }
 

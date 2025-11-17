@@ -10,10 +10,9 @@ import twocheg.mod.builders.states.SizeState
 import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.settings.BooleanSetting
-import twocheg.mod.settings.Setting
 import twocheg.mod.utils.math.Delta
-import twocheg.mod.utils.math.fromRGB
-import twocheg.mod.utils.math.splitText
+import twocheg.mod.utils.math.ColorUtils.fromRGB
+import twocheg.mod.utils.math.MathUtils.splitText
 
 class BooleanArea(
     override val parentArea: RenderArea,

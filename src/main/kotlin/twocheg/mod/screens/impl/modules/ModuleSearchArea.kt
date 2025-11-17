@@ -14,7 +14,7 @@ import twocheg.mod.renderers.impl.BuiltText
 import twocheg.mod.screens.impl.RenderArea
 import twocheg.mod.utils.math.Spring
 import twocheg.mod.utils.math.Pulse
-import twocheg.mod.utils.math.fromRGB
+import twocheg.mod.utils.math.ColorUtils.fromRGB
 
 
 class ModuleSearchArea(override val parentArea: RenderArea, val onInter: (Boolean) -> Unit) : RenderArea(parentArea) {
