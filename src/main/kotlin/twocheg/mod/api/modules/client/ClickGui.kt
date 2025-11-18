@@ -1,15 +1,17 @@
-package twocheg.mod.modules.client
+package twocheg.mod.api.modules.client
 
 import org.lwjgl.glfw.GLFW
 import twocheg.mod.Categories
 import twocheg.mod.managers.ModuleManager
-import twocheg.mod.screens.ConfigsScreen
-import twocheg.mod.screens.ModulesScreen
-import twocheg.mod.screens.ScreenBase
-import twocheg.mod.screens.impl.modules.ScreensArea
-import twocheg.mod.modules.Parent
-import twocheg.mod.screens.impl.modules.CategoryArea
+import twocheg.mod.ui.ModulesScreen
+import twocheg.mod.ui.ScreenBase
+import twocheg.mod.api.modules.Parent
+import twocheg.mod.ui.ConfigsScreen
+import twocheg.mod.ui.ScreensFactory
+import twocheg.mod.ui.impl.CategoryArea
+import twocheg.mod.ui.impl.FactoryArea
 import twocheg.mod.utils.math.Delta
+import kotlin.collections.iterator
 
 
 class ClickGui : Parent(
@@ -29,13 +31,6 @@ class ClickGui : Parent(
             }
         }
 
-    var selectScreens = ScreensArea(ModulesScreen::class.java, ConfigsScreen::class.java)
-    val categories = mutableListOf<CategoryArea>()
-
-    init {
-        this.selectScreens.showFactor = openFactor
-    }
-
     override fun onDisable() {
         mc.currentScreen?.let { screen ->
             if (screen is ScreenBase) {
@@ -46,19 +41,31 @@ class ClickGui : Parent(
 
     override fun onEnable() {
         openFactor.reset() // я не знаю, дельта накапливает значение до 1 и ему арифметически и кристально поебать, потом исправлю, когда будет не похуй (никогда)
-        if (categories.isEmpty()) {
-            for ((category, moduleList) in ModuleManager.byCategory) {
-                categories.add(CategoryArea(category, moduleList))
-            }
-        }
-        resetComponents()
-        selectScreens.reset()
-        mc.setScreen(selectScreens.createGui(selectScreens.defaultGuiClass))
+        factory.openDefault()
     }
 
-    fun resetComponents() {
-        for (category in categories) {
-            category.reset()
+    override fun init() {
+        for ((category, moduleList) in ModuleManager.byCategory) {
+            categories.add(CategoryArea(category to moduleList, 0f))
+        }
+        factoryArea.changeShowDelta(openFactor)
+        super.init()
+    }
+
+    companion object Components {
+        val categories = mutableListOf<CategoryArea>()
+
+        val factory = ScreensFactory(
+            ModulesScreen::class.java,
+            ConfigsScreen::class.java
+        )
+        val factoryArea = FactoryArea(factory)
+
+        fun reset() {
+            categories.forEach {
+                it.show = false
+                it.showFactor = 0f
+            }
         }
     }
 }

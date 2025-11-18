@@ -1,4 +1,4 @@
-package twocheg.mod.modules
+package twocheg.mod.api.modules
 
 interface Module {
     val name: String

@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import twocheg.mod.ModKt;
+import twocheg.mod.api.modules.Parent;
 import twocheg.mod.events.impl.EventPostTick;
 import twocheg.mod.events.impl.EventTick;
-import twocheg.mod.modules.Parent;
 
 @Mixin(MinecraftClient.class)
 public abstract class MixinMinecraftClient {

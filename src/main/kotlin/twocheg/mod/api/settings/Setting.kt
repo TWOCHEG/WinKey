@@ -1,4 +1,4 @@
-package twocheg.mod.settings
+package twocheg.mod.api.settings
 
 import twocheg.mod.managers.ConfigManager
 

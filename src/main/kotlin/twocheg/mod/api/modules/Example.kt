@@ -1,8 +1,10 @@
-package twocheg.mod.modules
+package twocheg.mod.api.modules
 
 import org.lwjgl.glfw.GLFW
 import twocheg.mod.Categories
-import twocheg.mod.settings.*
+import twocheg.mod.api.settings.BooleanSetting
+import twocheg.mod.api.settings.ListSettings
+import twocheg.mod.api.settings.SettingGroup
 
 data class MyGroup(
     val bool: BooleanSetting,

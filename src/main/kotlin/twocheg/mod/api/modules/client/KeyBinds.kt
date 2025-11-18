@@ -1,11 +1,11 @@
-package twocheg.mod.modules.client
+package twocheg.mod.api.modules.client
 
 import meteordevelopment.orbit.EventHandler
 import net.minecraft.client.gui.screen.TitleScreen
 import twocheg.mod.Categories
 import twocheg.mod.events.impl.EventKeyPress
 import twocheg.mod.managers.ModuleManager
-import twocheg.mod.modules.Parent
+import twocheg.mod.api.modules.Parent
 
 class KeyBinds : Parent(
     "keybinds",

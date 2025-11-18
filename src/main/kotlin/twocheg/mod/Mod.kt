@@ -1,6 +1,5 @@
 package twocheg.mod
 
-import com.google.common.base.Suppliers
 import meteordevelopment.orbit.EventBus
 import meteordevelopment.orbit.IEventBus
 import net.fabricmc.loader.api.FabricLoader
@@ -9,8 +8,9 @@ import twocheg.mod.managers.ModuleManager
 import twocheg.mod.msdf.MsdfFont
 import java.lang.invoke.MethodHandles
 
-import twocheg.mod.modules.Example
-import twocheg.mod.modules.client.*
+import twocheg.mod.api.modules.Example
+import twocheg.mod.api.modules.client.ClickGui
+import twocheg.mod.api.modules.client.KeyBinds
 
 
 val EVENT_BUS: IEventBus = EventBus()

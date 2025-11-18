@@ -1,7 +1,8 @@
-package twocheg.mod.screens
+package twocheg.mod.ui
 
 import net.minecraft.client.gui.DrawContext
 import org.lwjgl.glfw.GLFW
+import twocheg.mod.api.modules.client.ClickGui
 import twocheg.mod.utils.math.Timer
 
 class ModulesScreen() : ScreenBase("modules") {
@@ -22,8 +23,11 @@ class ModulesScreen() : ScreenBase("modules") {
 
     private val timer: Timer = Timer()
 
+    override val closeIf: Boolean
+        get() = !open && ClickGui.categories.any { it.showFactor == 0f }
+
     init {
-        areas += gui.categories
+        children += ClickGui.categories
     }
 
     override fun close() {
@@ -35,34 +39,39 @@ class ModulesScreen() : ScreenBase("modules") {
         if (mc.world == null) renderPanoramaBackground(context, delta) // вот это для рендера в главном меню обязатльно\
         // оно закрывает весь предыдущий мусор который почемуто не отчишается
 
-        context.matrices.push()
-        context.matrices.loadIdentity()
-
         velocityX *= FRICTION
         velocityY *= FRICTION
         scrollX += velocityX * delta
         scrollY += velocityY * delta
-
         val window = mc.window.handle
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_DOWN) == GLFW.GLFW_PRESS) velocityY = (velocityY + KEY_ACCELERATION).coerceAtMost(MAX_SPEED)
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_UP) == GLFW.GLFW_PRESS) velocityY = (velocityY - KEY_ACCELERATION).coerceAtLeast(-MAX_SPEED)
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT) == GLFW.GLFW_PRESS) velocityX = (velocityX + KEY_ACCELERATION).coerceAtMost(MAX_SPEED)
         if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT) == GLFW.GLFW_PRESS) velocityX = (velocityX - KEY_ACCELERATION).coerceAtLeast(-MAX_SPEED)
 
-        val matrix = context.matrices.peek().getPositionMatrix()
-        val categories = gui.categories
+        context.matrices.push()
+        context.matrices.loadIdentity()
+
+        val matrices = context.matrices.peek().getPositionMatrix()
+        val categories = ClickGui.categories
 
         var startX = (width / 2 - (((CATEGORY_WIDTH + CATEGORY_PADDING) * categories.size) - CATEGORY_PADDING) / 2) + scrollX
 
         var closeCount = 0
         for (i in 0..<categories.size) {
-            val c = categories[i]
+            val category = categories[i]
             if (timer.passedTimeMs > 100L * (i + 1)) {
-                c.show = open
+                category.show = open
             }
-            if (c.showFactor.get() == 0f) closeCount++
+            if (category.showFactor == 0f) closeCount++
 
-            c.render(context, matrix, startX, scrollY, CATEGORY_WIDTH, null, mouseX.toDouble(), mouseY.toDouble())
+            category.apply {
+                x = startX
+                y = 100f
+                recalculateLayout(CATEGORY_WIDTH, 0f)
+                render(context, matrices, mouseX.toDouble(), mouseY.toDouble())
+            }
+
             startX += CATEGORY_WIDTH + CATEGORY_PADDING
         }
 
@@ -74,6 +83,4 @@ class ModulesScreen() : ScreenBase("modules") {
         velocityY -= (scrollY * MOUSE_SENSITIVITY).toFloat()
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY)
     }
-
-    override fun closeIf(): Boolean = !open && gui.categories.any { it.showFactor.get() == 0f }
 }

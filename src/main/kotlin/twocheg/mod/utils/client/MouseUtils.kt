@@ -1,6 +1,6 @@
 package twocheg.mod.utils.client
 
-import twocheg.mod.modules.Parent
+import twocheg.mod.api.modules.Parent
 
 object MouseUtils {
     fun hoverCheck(x: Float, y: Float, width: Float, height: Float, mouseX: Double, mouseY: Double): Boolean {

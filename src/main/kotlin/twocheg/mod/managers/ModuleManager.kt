@@ -2,7 +2,7 @@ package twocheg.mod.managers
 
 import twocheg.mod.Categories
 import twocheg.mod.EVENT_BUS
-import twocheg.mod.modules.Parent
+import twocheg.mod.api.modules.Parent
 
 object ModuleManager {
     val modules = mutableListOf<Parent>()

@@ -65,8 +65,7 @@ private fun cubicBezierInterpolate(t: Float, x1: Float, y1: Float, x2: Float, y3
 class Delta(
     private val direction: () -> Boolean,
     private val durationMs: Float = 400f,
-    private val curve: EasingCurve = EasingCurve.EaseInOut,
-    private val parentFactor: () -> Float = { 1f }
+    private val curve: EasingCurve = EasingCurve.EaseInOut
 ) {
     private val timer = Timer()
     private var virtualTimeMs: Float = 0f
@@ -97,7 +96,7 @@ class Delta(
         }
 
         val t = (virtualTimeMs / durationMs).coerceIn(0f, 1f)
-        return curve.interpolate(t) * parentFactor()
+        return curve.interpolate(t)
     }
 }
 

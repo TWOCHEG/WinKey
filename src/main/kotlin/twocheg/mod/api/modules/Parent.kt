@@ -1,10 +1,10 @@
-package twocheg.mod.modules
+package twocheg.mod.api.modules
 
 import net.minecraft.client.MinecraftClient
 import twocheg.mod.Categories
 import twocheg.mod.managers.ConfigManager
 import twocheg.mod.managers.ModuleManager
-import twocheg.mod.settings.Setting
+import twocheg.mod.api.settings.Setting
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 

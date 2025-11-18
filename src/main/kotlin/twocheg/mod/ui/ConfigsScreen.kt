@@ -1,4 +1,4 @@
-package twocheg.mod.screens
+package twocheg.mod.ui
 
 import net.minecraft.client.gui.DrawContext
 import twocheg.mod.bikoFont
