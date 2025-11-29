@@ -6,10 +6,12 @@ plugins {
 }
 
 repositories {
+    gradlePluginPortal()
     mavenCentral()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.meteordev.org/releases")
     maven("https://libraries.minecraft.net")
+    maven("https://ferra13671.github.io/maven/")
 }
 
 version = project.property("mod_version") as String
@@ -36,15 +38,15 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     modImplementation("meteordevelopment:orbit:0.2.3")
+
+    implementation("com.google.code.gson:gson:2.8.9")
+    implementation("net.fabricmc:dev-launch-injector:0.2.1+build.8")
+
     modImplementation("io.github.0x3c50.renderer:renderer-fabric:2.1.5")
-    // кросплатформеность 💀, да кто вообще будет юзать это кроме меня на винде
     implementation("org.lwjgl:lwjgl-harfbuzz:3.3.3:natives-windows")
     implementation("org.lwjgl:lwjgl-harfbuzz:3.3.3:natives-linux")
     implementation("org.lwjgl:lwjgl-harfbuzz:3.3.3:natives-macos")
     implementation(platform("org.lwjgl:lwjgl-bom:3.3.3"))
-
-    implementation("com.google.code.gson:gson:2.8.9")
-    implementation("net.fabricmc:dev-launch-injector:0.2.1+build.8")
 }
 
 sourceSets {
